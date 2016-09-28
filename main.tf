@@ -109,8 +109,8 @@ resource "aws_subnet" "publicC" {
     }
 }
 
-resource "aws_security_group" "allow_ssh" {
-  name = "allow_ssh"
+resource "aws_security_group" "kubernetes" {
+  name = "kubernetes"
   description = "Allow inbound ssh traffic"
   vpc_id = "${aws_vpc.main.id}"
 
@@ -137,7 +137,7 @@ resource "aws_security_group" "allow_ssh" {
   }
 
   tags {
-    Name = "allow_ssh"
+    Name = "kubernetes"
   }
 }
 
@@ -165,7 +165,7 @@ resource "aws_instance" "k8s-master" {
   user_data = "${data.template_file.master-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
@@ -181,12 +181,12 @@ resource "aws_instance" "k8s-worker1" {
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "[TF] k8s-worker1"
+      Name = "worker0"
   }
 }
 
@@ -197,11 +197,11 @@ resource "aws_instance" "k8s-worker2" {
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "[TF] k8s-worker2"
+      Name = "worker1"
   }
 }
