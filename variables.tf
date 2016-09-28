@@ -40,3 +40,11 @@ variable "key_name" {
 variable "region" {
   default = "us-east-1"
 }
+
+variable "master-userdata" {
+    default = "master.sh"
+}
+
+variable "worker-userdata" {
+    default = "worker.sh"
+}

@@ -9,4 +9,7 @@ apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 curl -sSL https://get.docker.com/ | sh
 systemctl start docker
 
-kubeadm init
+kubeadm init --token=${k8stoken}
+
+kubectl apply -f https://git.io/weave-kube
+daemonset "weave-net" created

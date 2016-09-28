@@ -8,3 +8,5 @@ apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 curl -sSL https://get.docker.com/ | sh
 systemctl start docker
+
+for i in {1..50}; do kubeadm join --token=${k8stoken} ${masterIP} && break || sleep 15; done

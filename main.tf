@@ -121,6 +121,14 @@ resource "aws_security_group" "allow_ssh" {
       cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["10.0.0.0/16"]
+  }
+
+
   egress {
       from_port = 0
       to_port = 0
@@ -133,11 +141,28 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+data "template_file" "master-userdata" {
+    template = "${file("${var.master-userdata}")}"
+
+    vars {
+        k8stoken = "${var.k8stoken}"
+    }
+}
+
+data "template_file" "worker-userdata" {
+    template = "${file("${var.worker-userdata}")}"
+
+    vars {
+        k8stoken = "${var.k8stoken}"
+        masterIP = "${aws_instance.k8s-master.private_ip}"
+    }
+}
+
 resource "aws_instance" "k8s-master" {
   ami           = "ami-2ef48339"
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
-  user_data = "${file("master.sh")}"
+  user_data = "${data.template_file.master-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.allow_ssh.id}"]
@@ -153,7 +178,7 @@ resource "aws_instance" "k8s-worker1" {
   ami           = "ami-2ef48339"
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
-  user_data = "${file("master.sh")}"
+  user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.allow_ssh.id}"]
@@ -169,7 +194,7 @@ resource "aws_instance" "k8s-worker2" {
   ami           = "ami-2ef48339"
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
-  user_data = "${file("master.sh")}"
+  user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.allow_ssh.id}"]
