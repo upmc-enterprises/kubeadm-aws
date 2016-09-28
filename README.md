@@ -14,10 +14,8 @@ The terraform script builds out a new VPC in your account and 3 corresponding su
 
 1. Clone the repo: `git clone https://github.com/upmc-enterprises/kubeadm-aws.git`
 - [Install Terraform](https://www.terraform.io/intro/getting-started/install.html)
-- Update the `main.tf` file with your aws credentials
-- Update the `main.tf` file with your [keypair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) used to connect to the EC2
 - Generate token: `python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'`
-- Build out infrastructure: `terraform apply -var 'k8stoken=<token>'`
+- Build out infrastructure: `terraform apply -var 'k8stoken=<token>' -var 'access_key=<key>' -var 'secret_key=<secret>' -var 'key_name=keypair'`
 - Done!
 
 ### About
