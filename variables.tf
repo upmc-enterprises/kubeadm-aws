@@ -25,6 +25,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 
 variable "k8stoken" {}
 
+variable "k8s-ssh-key" {}
+
 variable "access_key" {
   default = ""
 }
