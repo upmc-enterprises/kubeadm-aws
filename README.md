@@ -19,6 +19,8 @@ The terraform script builds out a new VPC in your account and 3 corresponding su
 - Build out infrastructure: `terraform apply`
 - SSH to master node get the init token: `cat /var/log/cloud-init-output.log`
 - SSH to each worker node and run the command found on the master node (e.g. `kubeadm join --token <token> <master-ip>`)
+- From the master, install pod network: `kubectl apply -f https://git.io/weave-kube
+daemonset "weave-net" created`
 
 ### About
 
