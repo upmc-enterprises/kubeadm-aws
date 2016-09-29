@@ -25,11 +25,15 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 
 variable "k8stoken" {}
 
-variable "k8s-ssh-key" {}
-
-variable "key_name" {
-  default = "sloka-virginia"
+variable "access_key" {
+  default = ""
 }
+
+variable "secret_key" {
+  default = ""
+}
+
+variable "k8s-ssh-key" {}
 
 variable "region" {
   default = "us-east-1"
