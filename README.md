@@ -16,8 +16,8 @@ The terraform script builds out a new VPC in your account and 3 corresponding su
 - [Install Terraform](https://www.terraform.io/intro/getting-started/install.html)
 - Generate token: `python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'`
 - Generate ssh keys: `ssh-keygen -f k8s-test`
-- Run terraform plan: `terraform plan -var k8s-ssh-key="$(cat k8s-test.pub)" -var 'k8stoken=<token>' -var 'access_key=<key>' -var 'secret_key=<secret>' -var 'key_name=keypair'`
-- Build out infrastructure: `terraform apply -var k8s-ssh-key="$(cat k8s-test.pub)" -var 'k8stoken=<token>' -var 'access_key=<key>' -var 'secret_key=<secret>' -var 'key_name=keypair'`
+- Run terraform plan: `terraform plan -var k8s-ssh-key="$(cat k8s-test.pub)" -var 'k8stoken=<token>'`
+- Build out infrastructure: `terraform apply -var k8s-ssh-key="$(cat k8s-test.pub)" -var 'k8stoken=<token>'`
 - ssh to kube master and run something: `ssh ubuntu@$(terraform output master_dns) -i k8s-test`
 - Done!
 
