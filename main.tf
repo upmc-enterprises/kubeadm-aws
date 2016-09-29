@@ -30,6 +30,16 @@ provider "aws" {
   region     = "${var.region}"
 }
 
+# Key pair for the instances
+resource "aws_key_pair" "ssh-key" {
+  key_name = "k8s"
+  public_key = "${var.k8s-ssh-key}"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_vpc" "main" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
@@ -163,7 +173,7 @@ resource "aws_instance" "k8s-master" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.master-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
@@ -179,7 +189,7 @@ resource "aws_instance" "k8s-worker1" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
@@ -195,7 +205,7 @@ resource "aws_instance" "k8s-worker2" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
