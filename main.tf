@@ -30,6 +30,16 @@ provider "aws" {
   region     = "${var.region}"
 }
 
+# Key pair for the instances
+resource "aws_key_pair" "ssh-key" {
+  key_name = "k8s"
+  public_key = "${var.k8s-ssh-key}"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_vpc" "main" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
@@ -109,8 +119,8 @@ resource "aws_subnet" "publicC" {
     }
 }
 
-resource "aws_security_group" "allow_ssh" {
-  name = "allow_ssh"
+resource "aws_security_group" "kubernetes" {
+  name = "kubernetes"
   description = "Allow inbound ssh traffic"
   vpc_id = "${aws_vpc.main.id}"
 
@@ -137,7 +147,7 @@ resource "aws_security_group" "allow_ssh" {
   }
 
   tags {
-    Name = "allow_ssh"
+    Name = "kubernetes"
   }
 }
 
@@ -163,9 +173,9 @@ resource "aws_instance" "k8s-master" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.master-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
@@ -179,14 +189,14 @@ resource "aws_instance" "k8s-worker1" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "[TF] k8s-worker1"
+      Name = "worker0"
   }
 }
 
@@ -195,13 +205,13 @@ resource "aws_instance" "k8s-worker2" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${var.key_name}"
+  key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.allow_ssh.id}"]
+  security_groups = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "[TF] k8s-worker2"
+      Name = "worker1"
   }
 }

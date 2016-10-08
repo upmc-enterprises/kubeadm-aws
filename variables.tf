@@ -33,9 +33,7 @@ variable "secret_key" {
   default = ""
 }
 
-variable "key_name" {
-  default = "sloka-virginia"
-}
+variable "k8s-ssh-key" {}
 
 variable "region" {
   default = "us-east-1"
