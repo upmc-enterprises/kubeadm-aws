@@ -175,7 +175,7 @@ resource "aws_instance" "k8s-master" {
   user_data = "${data.template_file.master-userdata.rendered}"
   key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.kubernetes.id}"]
+  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
@@ -191,7 +191,7 @@ resource "aws_instance" "k8s-worker1" {
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.kubernetes.id}"]
+  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
@@ -207,7 +207,7 @@ resource "aws_instance" "k8s-worker2" {
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${aws_key_pair.ssh-key.key_name}"
   associate_public_ip_address = true
-  security_groups = ["${aws_security_group.kubernetes.id}"]
+  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
