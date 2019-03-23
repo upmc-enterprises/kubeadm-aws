@@ -23,6 +23,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 */
 
-output "master_dns" {
-  value = "${aws_instance.k8s-master.public_dns}"
+output "master_ip" {
+  value = "${aws_instance.k8s-master.public_ip}"
+}
+
+output "worker_ip" {
+  value = "${aws_instance.k8s-worker.public_ip}"
 }

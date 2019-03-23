@@ -25,19 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 */
 
 provider "aws" {
-  access_key = "${var.access_key}"
-  secret_key = "${var.secret_key}"
   region     = "${var.region}"
-}
-
-# Key pair for the instances
-resource "aws_key_pair" "ssh-key" {
-  key_name = "k8s"
-  public_key = "${var.k8s-ssh-key}"
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_vpc" "main" {
@@ -76,16 +64,6 @@ resource "aws_route_table_association" "publicA" {
     route_table_id = "${aws_route_table.r.id}"
 }
 
-resource "aws_route_table_association" "publicB" {
-    subnet_id = "${aws_subnet.publicB.id}"
-    route_table_id = "${aws_route_table.r.id}"
-}
-
-resource "aws_route_table_association" "publicC" {
-    subnet_id = "${aws_subnet.publicC.id}"
-    route_table_id = "${aws_route_table.r.id}"
-}
-
 resource "aws_subnet" "publicA" {
     vpc_id = "${aws_vpc.main.id}"
     cidr_block = "10.0.100.0/24"
@@ -94,28 +72,6 @@ resource "aws_subnet" "publicA" {
 
     tags {
         Name = "TF_PubSubnetA"
-    }
-}
-
-resource "aws_subnet" "publicB" {
-    vpc_id = "${aws_vpc.main.id}"
-    cidr_block = "10.0.101.0/24"
-    availability_zone = "us-east-1d"
-    map_public_ip_on_launch = true
-
-    tags {
-        Name = "TF_PubSubnetB"
-    }
-}
-
-resource "aws_subnet" "publicC" {
-    vpc_id = "${aws_vpc.main.id}"
-    cidr_block = "10.0.102.0/24"
-    availability_zone = "us-east-1e"
-    map_public_ip_on_launch = true
-
-    tags {
-        Name = "TF_PubSubnetC"
     }
 }
 
@@ -165,6 +121,14 @@ data "template_file" "worker-userdata" {
     vars {
         k8stoken = "${var.k8stoken}"
         masterIP = "${aws_instance.k8s-master.private_ip}"
+        cluster_name = "${var.cluster-name}"
+        aws_access_key_id = "${var.aws-access-key-id}"
+        aws_secret_access_key = "${var.aws-secret-access-key}"
+        ssh_key_name = "${var.ssh-key-name}"
+        license_key = "${var.license-key}"
+        license_id = "${var.license-id}"
+        license_username = "${var.license-username}"
+        license_password = "${var.license-password}"
     }
 }
 
@@ -173,45 +137,29 @@ resource "aws_instance" "k8s-master" {
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.master-userdata.rendered}"
-  key_name = "${aws_key_pair.ssh-key.key_name}"
+  key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "[TF] k8s-master"
+      Name = "k8s-master"
   }
 }
 
-resource "aws_instance" "k8s-worker1" {
+resource "aws_instance" "k8s-worker" {
   ami           = "ami-2ef48339"
   instance_type = "t2.medium"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${aws_key_pair.ssh-key.key_name}"
+  key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
 
   depends_on = ["aws_internet_gateway.gw"]
 
   tags {
-      Name = "worker0"
-  }
-}
-
-resource "aws_instance" "k8s-worker2" {
-  ami           = "ami-2ef48339"
-  instance_type = "t2.medium"
-  subnet_id = "${aws_subnet.publicA.id}"
-  user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${aws_key_pair.ssh-key.key_name}"
-  associate_public_ip_address = true
-  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
-
-  depends_on = ["aws_internet_gateway.gw"]
-
-  tags {
-      Name = "worker1"
+      Name = "k8s-worker"
   }
 }
