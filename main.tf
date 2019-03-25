@@ -35,6 +35,13 @@ resource "aws_vpc" "main" {
     tags {
         Name = "TF_VPC"
     }
+
+    provisioner "local-exec" {
+        # Remove any leftover security group Milpa created. They would prevent
+        # terraform from destroying the VPC.
+        when    = "destroy"
+        command = "for sg in $(aws ec2 describe-security-groups --filters 'Name=group-name,Values=${var.cluster-name}-*' 'Name=vpc-id,Values=${self.id}' | jq -r '.SecurityGroups | .[] | .GroupId'); do aws ec2 delete-security-group --group-id $sg > /dev/null 2>&1; done"
+    }
 }
 
 resource "aws_internet_gateway" "gw" {
