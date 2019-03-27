@@ -37,10 +37,15 @@ resource "aws_vpc" "main" {
     }
 
     provisioner "local-exec" {
-        # Remove any leftover security group Milpa created. They would prevent
-        # terraform from destroying the VPC.
+        # Remove any leftover instance, security group etc Milpa created. They
+        # would prevent terraform from destroying the VPC.
         when    = "destroy"
-        command = "for sg in $(aws ec2 describe-security-groups --filters 'Name=group-name,Values=${var.cluster-name}-*' 'Name=vpc-id,Values=${self.id}' | jq -r '.SecurityGroups | .[] | .GroupId'); do aws ec2 delete-security-group --group-id $sg > /dev/null 2>&1; done"
+        command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name} > /dev/null 2>&1"
+        interpreter = ["/bin/bash", "-c"]
+        environment = {
+            USE_AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
+            USE_AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
+        }
     }
 }
 
@@ -49,6 +54,18 @@ resource "aws_internet_gateway" "gw" {
 
     tags {
         Name = "TF_main"
+    }
+
+    provisioner "local-exec" {
+        # Remove any leftover instance, security group etc Milpa created. They
+        # would prevent terraform from destroying the VPC.
+        when    = "destroy"
+        command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name} > /dev/null 2>&1"
+        interpreter = ["/bin/bash", "-c"]
+        environment = {
+            USE_AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
+            USE_AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
+        }
     }
 }
 
