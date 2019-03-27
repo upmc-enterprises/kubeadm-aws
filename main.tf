@@ -40,11 +40,11 @@ resource "aws_vpc" "main" {
         # Remove any leftover instance, security group etc Milpa created. They
         # would prevent terraform from destroying the VPC.
         when    = "destroy"
-        command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name} > /dev/null 2>&1"
+        command = "./cleanup-vpc.sh ${self.id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
         environment = {
-            USE_AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
-            USE_AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
+            AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
+            AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
         }
     }
 }
@@ -60,11 +60,11 @@ resource "aws_internet_gateway" "gw" {
         # Remove any leftover instance, security group etc Milpa created. They
         # would prevent terraform from destroying the VPC.
         when    = "destroy"
-        command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name} > /dev/null 2>&1"
+        command = "./cleanup-vpc.sh ${self.vpc_id} ${var.cluster-name}"
         interpreter = ["/bin/bash", "-c"]
         environment = {
-            USE_AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
-            USE_AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
+            AWS_ACCESS_KEY_ID = "${var.aws-access-key-id}"
+            AWS_SECRET_ACCESS_KEY = "${var.aws-secret-access-key}"
         }
     }
 }
