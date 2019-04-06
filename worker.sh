@@ -31,7 +31,9 @@ for i in {1..50}; do kubeadm join --discovery-token-unsafe-skip-ca-verification 
 echo 'KUBELET_KUBEADM_ARGS=--cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000' > /var/lib/kubelet/kubeadm-flags.env
 
 systemctl daemon-reload
-systemctl restart milpa; sleep 30; systemctl restart kiyot
+systemctl restart milpa
+systemctl restart kiyot
+systemctl restart kubelet
 
 docker ps -aq --no-trunc | xargs docker stop
 docker ps -aq --no-trunc | xargs docker rm
