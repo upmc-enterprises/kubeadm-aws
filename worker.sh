@@ -26,9 +26,9 @@ sed -i 's#--config /opt/milpa/etc/server.yml$#--config /opt/milpa/etc/server.yml
 mkdir -p /etc/systemd/system/kubelet.service.d/
 echo -e "[Service]\nStartLimitInterval=0\nStartLimitIntervalSec=0\nRestart=always\nRestartSec=5" > /etc/systemd/system/kubelet.service.d/override.conf
 
-for i in {1..50}; do kubeadm join --discovery-token-unsafe-skip-ca-verification --token=${k8stoken} ${masterIP}:6443 && break || sleep 15; done
+for i in {1..50}; do kubeadm join --discovery-token-unsafe-skip-ca-verification --token=${k8stoken} ${masterIP}:6443 --node-name=$(hostname -f) && break || sleep 15; done
 
-echo 'KUBELET_KUBEADM_ARGS=--cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000' > /var/lib/kubelet/kubeadm-flags.env
+echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000" > /var/lib/kubelet/kubeadm-flags.env
 
 systemctl daemon-reload
 systemctl restart milpa

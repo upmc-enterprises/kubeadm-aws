@@ -18,6 +18,8 @@ bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
   token: ${k8stoken}
+nodeRegistration:
+  name: $(hostname -f)
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
@@ -26,10 +28,19 @@ dns:
 networking:
   podSubnet: 172.20.0.0/16
   serviceSubnet: 10.96.0.0/12
+apiServer:
+  extraArgs:
+    enable-admission-plugins: DefaultStorageClass,NodeRestriction
+#    cloud-provider: aws
+controllerManager:
+  extraArgs:
+    cloud-provider: aws
+    configure-cloud-routes: "false"
+    address: 0.0.0.0
 EOF
-kubeadm init --config=/tmp/kubeadm-config.yaml
+kubeadm init --node-name=$(hostname -f) --config=/tmp/kubeadm-config.yaml
 
-echo 'KUBELET_KUBEADM_ARGS=--cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1' > /var/lib/kubelet/kubeadm-flags.env
+echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1" > /var/lib/kubelet/kubeadm-flags.env
 systemctl restart kubelet
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
