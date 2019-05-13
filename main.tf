@@ -27,13 +27,18 @@ provider "aws" {
   region     = "${var.region}"
 }
 
+locals {
+  k8s_cluster_tags = "${map(
+    "Name", "kubeadm-milpa-${var.cluster-name}",
+    "kubernetes.io/cluster/${var.cluster-name}", "owned"
+  )}"
+}
+
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   enable_dns_hostnames = true
 
-  tags {
-    Name = "TF_VPC"
-  }
+  tags = "${local.k8s_cluster_tags}"
 
   provisioner "local-exec" {
     # Remove any leftover instance, security group etc Milpa created. They
@@ -51,9 +56,7 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "gw" {
   vpc_id = "${aws_vpc.main.id}"
 
-  tags {
-    Name = "TF_main"
-  }
+  tags = "${local.k8s_cluster_tags}"
 
   provisioner "local-exec" {
     # Remove any leftover instance, security group etc Milpa created. They
@@ -77,9 +80,7 @@ resource "aws_route_table" "r" {
 
   depends_on = ["aws_internet_gateway.gw"]
 
-  tags {
-    Name = "TF_main"
-  }
+  tags = "${local.k8s_cluster_tags}"
 }
 
 resource "aws_route_table_association" "publicA" {
@@ -93,9 +94,7 @@ resource "aws_subnet" "publicA" {
   availability_zone = "us-east-1c"
   map_public_ip_on_launch = true
 
-  tags {
-    Name = "TF_PubSubnetA"
-  }
+  tags = "${local.k8s_cluster_tags}"
 }
 
 resource "aws_security_group" "kubernetes" {
@@ -125,9 +124,7 @@ resource "aws_security_group" "kubernetes" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
-    Name = "kubernetes"
-  }
+  tags = "${local.k8s_cluster_tags}"
 }
 
 data "template_file" "master-userdata" {
@@ -166,9 +163,7 @@ resource "aws_instance" "k8s-master" {
 
   depends_on = ["aws_internet_gateway.gw"]
 
-  tags {
-    Name = "k8s-master"
-  }
+  tags = "${local.k8s_cluster_tags}"
 }
 
 resource "aws_instance" "k8s-worker" {
@@ -183,7 +178,5 @@ resource "aws_instance" "k8s-worker" {
 
   depends_on = ["aws_internet_gateway.gw"]
 
-  tags {
-    Name = "k8s-worker"
-  }
+  tags = "${local.k8s_cluster_tags}"
 }
