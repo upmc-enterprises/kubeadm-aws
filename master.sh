@@ -53,3 +53,16 @@ sudo chown ubuntu: /home/ubuntu/.kube/config
 kubectl get cm -n kube-system kube-proxy -oyaml | sed -r '/^\s+resourceVersion:/d' | sed 's/masqueradeAll: false/masqueradeAll: true/' | kubectl replace -f -
 
 kubectl patch -n kube-system deployment kube-dns --patch '{"spec": {"template": {"spec": {"tolerations": [{"key": "CriticalAddonsOnly", "operator": "Exists"}]}}}}'
+
+cat <<EOF > /tmp/storageclass.yaml
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ebs
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/aws-ebs
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+EOF
+kubectl apply -f /tmp/storageclass.yaml
