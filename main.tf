@@ -127,12 +127,72 @@ resource "aws_security_group" "kubernetes" {
   tags = "${local.k8s_cluster_tags}"
 }
 
-data "template_file" "master-userdata" {
-    template = "${file("${var.master-userdata}")}"
-
-    vars {
-        k8stoken = "${var.k8stoken}"
+resource "aws_iam_role" "k8s-milpa" {
+  name = "k8s-milpa"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
     }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "k8s-milpa" {
+  name = "k8s-milpa"
+  role = "${aws_iam_role.k8s-milpa.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["ec2:*"],
+      "Effect": "Allow",
+      "Resource": ["*"]
+    },
+    {
+      "Action": ["elasticloadbalancing:*"],
+      "Effect": "Allow",
+      "Resource": ["*"]
+    },
+    {
+      "Action": ["route53:*"],
+      "Effect": "Allow",
+      "Resource": ["*"]
+    },
+    {
+      "Action": ["ecr:*"],
+      "Effect": "Allow",
+      "Resource": "*"
+    },
+    {
+      "Action": ["dynamodb:*"],
+      "Effect": "Allow",
+      "Resource": "arn:aws:dynamodb:::MilpaClusters"
+    }
+  ]
+}
+EOF
+}
+
+resource  "aws_iam_instance_profile" "k8s-milpa" {
+  name = "k8s-milpa"
+  role = "${aws_iam_role.k8s-milpa.name}"
+}
+
+data "template_file" "master-userdata" {
+  template = "${file("${var.master-userdata}")}"
+
+  vars {
+    k8stoken = "${var.k8stoken}"
+  }
 }
 
 data "template_file" "worker-userdata" {
@@ -160,6 +220,7 @@ resource "aws_instance" "k8s-master" {
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.k8s-milpa.id}"
 
   depends_on = ["aws_internet_gateway.gw"]
 
