@@ -26,3 +26,27 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 output "master_dns" {
   value = "${aws_instance.k8s-master.public_dns}"
 }
+
+output "master_public_ip" {
+  value = "${aws_instance.k8s-master.public_ip}"
+}
+
+output "master_private_ip" {
+  value = "${aws_instance.k8s-master.private_ip}"
+}
+
+output "worker1_public_ip" {
+  value = "${aws_instance.k8s-worker1.public_ip}"
+}
+
+output "worker1_private_ip" {
+  value = "${aws_instance.k8s-worker1.private_ip}"
+}
+
+output "worker2_public_ip" {
+  value = "${aws_instance.k8s-worker2.public_ip}"
+}
+
+output "worker2_private_ip" {
+  value = "${aws_instance.k8s-worker2.private_ip}"
+}
