@@ -1,1 +1,4 @@
 .terraform/
+*terraform*
+*k8s-test*
+*.pub
