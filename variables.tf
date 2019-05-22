@@ -29,9 +29,15 @@ variable "ssh-key-name" {}
 
 variable "cluster-name" {}
 
-variable "aws-access-key-id" {}
+variable "aws-access-key-id" {
+  // If empty, IAM will be used.
+  default = ""
+}
 
-variable "aws-secret-access-key" {}
+variable "aws-secret-access-key" {
+  // If empty, IAM will be used.
+  default = ""
+}
 
 variable "license-key" {}
 
