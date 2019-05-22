@@ -42,13 +42,13 @@ variable "license-username" {}
 variable "license-password" {}
 
 variable "region" {
-    default = "us-east-1"
+  default = "us-east-1"
 }
 
 variable "master-userdata" {
-    default = "master.sh"
+  default = "master.sh"
 }
 
 variable "worker-userdata" {
-    default = "worker.sh"
+  default = "worker.sh"
 }
