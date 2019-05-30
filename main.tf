@@ -128,7 +128,7 @@ resource "aws_security_group" "kubernetes" {
 }
 
 resource "aws_iam_role" "k8s-milpa" {
-  name = "k8s-milpa"
+  name = "k8s-milpa-${var.cluster-name}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -146,7 +146,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "k8s-milpa" {
-  name = "k8s-milpa"
+  name = "k8s-milpa-${var.cluster-name}"
   role = "${aws_iam_role.k8s-milpa.id}"
   policy = <<EOF
 {
@@ -232,7 +232,7 @@ EOF
 }
 
 resource  "aws_iam_instance_profile" "k8s-milpa" {
-  name = "k8s-milpa"
+  name = "k8s-milpa-${var.cluster-name}"
   role = "${aws_iam_role.k8s-milpa.name}"
 }
 
