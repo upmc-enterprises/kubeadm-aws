@@ -20,6 +20,8 @@ bootstrapTokens:
   token: ${k8stoken}
 nodeRegistration:
   name: $(hostname -f)
+  kubeletExtraArgs:
+    cloud-provider: aws
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
@@ -31,7 +33,7 @@ networking:
 apiServer:
   extraArgs:
     enable-admission-plugins: DefaultStorageClass,NodeRestriction
-#    cloud-provider: aws
+    cloud-provider: aws
 controllerManager:
   extraArgs:
     cloud-provider: aws
