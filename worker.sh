@@ -7,6 +7,22 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni python python-pip jq
 
+cat <<EOF > /tmp/kubeadm-config.yaml
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    token: ${k8stoken}
+    unsafeSkipCAVerification: true
+    apiServerEndpoint: ${masterIP}:6443
+nodeRegistration:
+  name: $(hostname -f)
+#  criSocket: /opt/milpa/run/kiyot.sock
+  kubeletExtraArgs:
+    cloud-provider: aws
+    max-pods: "1000"
+EOF
+
 # Install docker so kubeadm won't complain.
 curl -sSL https://get.docker.com/ | sh
 systemctl start docker
@@ -26,7 +42,7 @@ sed -i 's#--config /opt/milpa/etc/server.yml$#--config /opt/milpa/etc/server.yml
 mkdir -p /etc/systemd/system/kubelet.service.d/
 echo -e "[Service]\nStartLimitInterval=0\nStartLimitIntervalSec=0\nRestart=always\nRestartSec=5" > /etc/systemd/system/kubelet.service.d/override.conf
 
-for i in {1..50}; do kubeadm join --discovery-token-unsafe-skip-ca-verification --token=${k8stoken} ${masterIP}:6443 --node-name=$(hostname -f) && break || sleep 15; done
+for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
 
 echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000" > /var/lib/kubelet/kubeadm-flags.env
 
