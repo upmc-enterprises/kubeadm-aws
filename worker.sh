@@ -44,7 +44,7 @@ echo -e "[Service]\nStartLimitInterval=0\nStartLimitIntervalSec=0\nRestart=alway
 
 for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
 
-echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000" > /var/lib/kubelet/kubeadm-flags.env
+echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --hostname-override=$(hostname -f) --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1 --container-runtime=remote --container-runtime-endpoint=/opt/milpa/run/kiyot.sock --max-pods=1000" > /var/lib/kubelet/kubeadm-flags.env
 
 systemctl daemon-reload
 systemctl restart milpa
