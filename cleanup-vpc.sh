@@ -65,6 +65,14 @@ if [[ -n "$lbs" ]]; then
         aws elb delete-load-balancer --load-balancer-name $lb > /dev/null 2>&1
     done
 fi
+v2lbs=$(aws elbv2 describe-load-balancers | jq -r ".LoadBalancers | .[] | select(.VpcId==\"$VPC_ID\") | .LoadBalancerArn")
+if [[ -n "$v2lbs" ]]; then
+    echo "Removing v2 LBs:"
+    echo "$v2lbs"
+    for lb in $v2lbs; do
+        aws elbv2 delete-load-balancer --load-balancer-arn $lb > /dev/null 2>&1
+    done
+fi
 
 # Delete security groups in VPC.
 sgs=$(aws ec2 describe-security-groups | jq -r ".SecurityGroups | .[] | select(.VpcId == \"$VPC_ID\") | .GroupId")
