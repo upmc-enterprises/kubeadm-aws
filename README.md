@@ -8,20 +8,12 @@ This is a Terraform configuration for provisioning a simple (one master, one wor
 
 Create a file at `~/env.tfvars`:
 
-    cluster-name = "my-cluster-name"
-    aws-access-key-id = "my-access-key"
-    aws-secret-access-key = "my-secret-key"
-    ssh-key-name = "my-ssh-key-on-EC2"
-    # Get your license at https://www.elotl.co/trial.
-    license-key = ""
-    license-id = ""
-    license-username = ""
-    license-password = ""
-    # Generate a token via:
-    # python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'
-    k8stoken = ""
+```
+$ cp env-example.tfvars ~/env.tfvars
+$ vi ~/env.tfvars
+```
 
-Fill in all those variables, then apply the configuration:
+Fill in all the required variables, then apply the configuration:
 
     $ terraform init # Only needed the first time.
     [...]
