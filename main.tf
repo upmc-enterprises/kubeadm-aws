@@ -430,6 +430,7 @@ data "template_file" "worker-userdata" {
     k8stoken = "${data.external.k8stoken.result.token}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     pod_cidr = "${var.pod-cidr}"
+    non_masquerade_cidr = "${var.non-masquerade-cidr}"
   }
 }
 

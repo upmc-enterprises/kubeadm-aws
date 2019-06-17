@@ -7,6 +7,10 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni docker.io
 
+if [[ -z "${non_masquerade_cidr}" ]]; then
+    non_masquerade_cidr="${pod_cidr}"
+fi
+
 cat <<EOF > /tmp/kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: JoinConfiguration
@@ -20,7 +24,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: aws
     network-plugin: kubenet
-    non-masquerade-cidr: ${pod_cidr}
+    non-masquerade-cidr: ${non_masquerade_cidr}
 EOF
 
 modprobe br_netfilter
