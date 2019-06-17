@@ -35,7 +35,7 @@ locals {
 }
 
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = "${var.vpc-cidr}"
   enable_dns_hostnames = true
 
   tags = "${local.k8s_cluster_tags}"
@@ -71,6 +71,15 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
+resource "aws_subnet" "publicA" {
+  vpc_id = "${aws_vpc.main.id}"
+  cidr_block = "${var.subnet-cidr}"
+  availability_zone = "us-east-1a"
+  map_public_ip_on_launch = true
+
+  tags = "${local.k8s_cluster_tags}"
+}
+
 resource "aws_route_table" "r" {
   vpc_id = "${aws_vpc.main.id}"
   route {
@@ -86,15 +95,6 @@ resource "aws_route_table" "r" {
 resource "aws_route_table_association" "publicA" {
   subnet_id = "${aws_subnet.publicA.id}"
   route_table_id = "${aws_route_table.r.id}"
-}
-
-resource "aws_subnet" "publicA" {
-  vpc_id = "${aws_vpc.main.id}"
-  cidr_block = "10.0.100.0/24"
-  availability_zone = "us-east-1c"
-  map_public_ip_on_launch = true
-
-  tags = "${local.k8s_cluster_tags}"
 }
 
 resource "aws_security_group" "kubernetes" {
@@ -113,9 +113,15 @@ resource "aws_security_group" "kubernetes" {
     from_port = 0
     to_port = 0
     protocol = "-1"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = ["${var.vpc-cidr}"]
   }
 
+  ingress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["${var.pod-cidr}"]
+  }
 
   egress {
     from_port = 0
@@ -333,11 +339,83 @@ resource  "aws_iam_instance_profile" "k8s-milpa-worker" {
   role = "${aws_iam_role.k8s-milpa-worker.name}"
 }
 
+resource "aws_iam_role" "k8s-worker" {
+  name = "k8s-worker-${var.cluster-name}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "k8s-worker" {
+  name = "k8s-worker-${var.cluster-name}"
+  role = "${aws_iam_role.k8s-worker.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource  "aws_iam_instance_profile" "k8s-worker" {
+  name = "k8s-worker-${var.cluster-name}"
+  role = "${aws_iam_role.k8s-worker.name}"
+}
+
 data "template_file" "master-userdata" {
   template = "${file("${var.master-userdata}")}"
 
   vars {
     k8stoken = "${var.k8stoken}"
+    pod_cidr = "${var.pod-cidr}"
+    service_cidr = "${var.service-cidr}"
+  }
+}
+
+data "template_file" "milpa-worker-userdata" {
+  template = "${file("${var.milpa-worker-userdata}")}"
+
+  vars {
+    k8stoken = "${var.k8stoken}"
+    masterIP = "${aws_instance.k8s-master.private_ip}"
+    service_cidr = "${var.service-cidr}"
+    cluster_name = "${var.cluster-name}"
+    aws_access_key_id = "${var.aws-access-key-id}"
+    aws_secret_access_key = "${var.aws-secret-access-key}"
+    license_key = "${var.license-key}"
+    license_id = "${var.license-id}"
+    license_username = "${var.license-username}"
+    license_password = "${var.license-password}"
+    itzo_url = "${var.itzo-url}"
+    itzo_version = "${var.itzo-version}"
+    milpa_installer_url = "${var.milpa-installer-url}"
   }
 }
 
@@ -347,17 +425,7 @@ data "template_file" "worker-userdata" {
   vars {
     k8stoken = "${var.k8stoken}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
-    cluster_name = "${var.cluster-name}"
-    aws_access_key_id = "${var.aws-access-key-id}"
-    aws_secret_access_key = "${var.aws-secret-access-key}"
-    ssh_key_name = "${var.ssh-key-name}"
-    license_key = "${var.license-key}"
-    license_id = "${var.license-id}"
-    license_username = "${var.license-username}"
-    license_password = "${var.license-password}"
-    itzo_url = "${var.itzo-url}"
-    itzo_version = "${var.itzo-version}"
-    milpa_installer_url = "${var.milpa-installer-url}"
+    pod_cidr = "${var.pod-cidr}"
   }
 }
 
@@ -376,6 +444,21 @@ resource "aws_instance" "k8s-master" {
   tags = "${local.k8s_cluster_tags}"
 }
 
+resource "aws_instance" "k8s-milpa-worker" {
+  ami           = "ami-2ef48339"
+  instance_type = "t2.medium"
+  subnet_id = "${aws_subnet.publicA.id}"
+  user_data = "${data.template_file.milpa-worker-userdata.rendered}"
+  key_name = "${var.ssh-key-name}"
+  associate_public_ip_address = true
+  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.k8s-milpa-worker.id}"
+
+  depends_on = ["aws_internet_gateway.gw"]
+
+  tags = "${local.k8s_cluster_tags}"
+}
+
 resource "aws_instance" "k8s-worker" {
   ami           = "ami-2ef48339"
   instance_type = "t2.medium"
@@ -384,7 +467,7 @@ resource "aws_instance" "k8s-worker" {
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-milpa-worker.id}"
+  iam_instance_profile = "${aws_iam_instance_profile.k8s-worker.id}"
 
   depends_on = ["aws_internet_gateway.gw"]
 

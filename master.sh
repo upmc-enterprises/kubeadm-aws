@@ -28,8 +28,8 @@ kind: ClusterConfiguration
 dns:
   type: kube-dns
 networking:
-  podSubnet: 172.20.0.0/16
-  serviceSubnet: 10.96.0.0/12
+  podSubnet: ${pod_cidr}
+  serviceSubnet: ${service_cidr}
 apiServer:
   extraArgs:
     enable-admission-plugins: DefaultStorageClass,NodeRestriction
@@ -37,7 +37,7 @@ apiServer:
 controllerManager:
   extraArgs:
     cloud-provider: aws
-    configure-cloud-routes: "false"
+    configure-cloud-routes: "true"
     address: 0.0.0.0
 EOF
 kubeadm init --node-name=$(hostname -f) --config=/tmp/kubeadm-config.yaml

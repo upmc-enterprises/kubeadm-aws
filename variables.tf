@@ -73,3 +73,23 @@ variable "master-userdata" {
 variable "worker-userdata" {
   default = "worker.sh"
 }
+
+variable "milpa-worker-userdata" {
+  default = "milpa-worker.sh"
+}
+
+variable "vpc-cidr" {
+  default = "10.0.0.0/16"
+}
+
+variable "subnet-cidr" {
+  default = "10.0.100.0/24"
+}
+
+variable "pod-cidr" {
+  default = "172.20.0.0/16"
+}
+
+variable "service-cidr" {
+  default = "10.96.0.0/12"
+}
