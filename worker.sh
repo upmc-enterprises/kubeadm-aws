@@ -11,6 +11,12 @@ if [[ -z "${non_masquerade_cidr}" ]]; then
     non_masquerade_cidr="${pod_cidr}"
 fi
 
+name=""
+while [[ -z "$name" ]]; do
+    sleep 1
+    name="$(hostname -f)"
+done
+
 cat <<EOF > /tmp/kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: JoinConfiguration
@@ -20,7 +26,7 @@ discovery:
     unsafeSkipCAVerification: true
     apiServerEndpoint: ${masterIP}:6443
 nodeRegistration:
-  name: $(hostname -f)
+  name: $name
   kubeletExtraArgs:
     cloud-provider: aws
     network-plugin: kubenet

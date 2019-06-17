@@ -7,6 +7,12 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni python python-pip jq docker.io
 
+name=""
+while [[ -z "$name" ]]; do
+    sleep 1
+    name="$(hostname -f)"
+done
+
 cat <<EOF > /tmp/kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: JoinConfiguration
@@ -16,7 +22,7 @@ discovery:
     unsafeSkipCAVerification: true
     apiServerEndpoint: ${masterIP}:6443
 nodeRegistration:
-  name: $(hostname -f)
+  name: $name
 #  criSocket: unix:///opt/milpa/run/kiyot.sock
   kubeletExtraArgs:
     cloud-provider: aws
