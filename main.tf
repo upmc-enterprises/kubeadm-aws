@@ -390,7 +390,7 @@ resource  "aws_iam_instance_profile" "k8s-worker" {
 }
 
 data "external" "k8stoken" {
-  program = ["python", "-c", "import random; print '{\"token\": \"%0x.%0x\"}' % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))"]
+  program = ["python", "-c", "import random; print '{\"token\": \"%06x.%016x\"}' % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))"]
 }
 
 data "template_file" "master-userdata" {
