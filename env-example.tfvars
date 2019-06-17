@@ -15,9 +15,6 @@ license-key = "FILL_IN"
 license-id = "FILL_IN"
 license-username = "FILL_IN"
 license-password = "FILL_IN"
-# When you set up a new cluster, generate a token via:
-# python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'
-k8stoken = "e7ea06.8f558c9acdba2743"
 # Optional parameter. URL to fetch the installer from.
 #milpa-installer-url = ""
 # Optional parameters. URL and version of the Milpa node agent.
