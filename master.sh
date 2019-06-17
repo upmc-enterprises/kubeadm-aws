@@ -9,7 +9,20 @@ apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 curl -sSL https://get.docker.com/ | sh
 systemctl start docker
 
+modprobe br_netfilter
 sysctl net.bridge.bridge-nf-call-iptables=1
+sysctl net.ipv4.ip_forward=1
+iptables -P FORWARD ACCEPT
+
+if [[ -z "${non_masquerade_cidr}" ]]; then
+    non_masquerade_cidr="${pod_cidr}"
+fi
+
+name=""
+while [[ -z "$name" ]]; do
+    sleep 1
+    name="$(hostname -f)"
+done
 
 cat <<EOF > /tmp/kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta1
@@ -19,9 +32,11 @@ bootstrapTokens:
   - system:bootstrappers:kubeadm:default-node-token
   token: ${k8stoken}
 nodeRegistration:
-  name: $(hostname -f)
+  name: $name
   kubeletExtraArgs:
     cloud-provider: aws
+    network-plugin: kubenet
+    non-masquerade-cidr: ${non_masquerade_cidr}
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
@@ -40,10 +55,7 @@ controllerManager:
     configure-cloud-routes: "true"
     address: 0.0.0.0
 EOF
-kubeadm init --node-name=$(hostname -f) --config=/tmp/kubeadm-config.yaml
-
-echo "KUBELET_KUBEADM_ARGS=--cloud-provider=aws --cgroup-driver=cgroupfs --pod-infra-container-image=k8s.gcr.io/pause:3.1" > /var/lib/kubelet/kubeadm-flags.env
-systemctl restart kubelet
+kubeadm init --config=/tmp/kubeadm-config.yaml
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
 

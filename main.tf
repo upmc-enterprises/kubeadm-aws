@@ -400,6 +400,7 @@ data "template_file" "master-userdata" {
     k8stoken = "${data.external.k8stoken.result.token}"
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
+    non_masquerade_cidr = "${var.non-masquerade-cidr}"
   }
 }
 
