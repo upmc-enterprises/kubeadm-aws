@@ -389,15 +389,23 @@ resource  "aws_iam_instance_profile" "k8s-worker" {
   role = "${aws_iam_role.k8s-worker.name}"
 }
 
-data "external" "k8stoken" {
-  program = ["python", "-c", "import random; print '{\"token\": \"%06x.%016x\"}' % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))"]
+resource "random_id" "k8stoken-prefix" {
+  byte_length = 3
+}
+
+resource "random_id" "k8stoken-suffix" {
+  byte_length = 8
+}
+
+locals {
+  k8stoken = "${format("%s.%s", random_id.k8stoken-prefix.hex, random_id.k8stoken-suffix.hex)}"
 }
 
 data "template_file" "master-userdata" {
   template = "${file("${var.master-userdata}")}"
 
   vars {
-    k8stoken = "${data.external.k8stoken.result.token}"
+    k8stoken = "${local.k8stoken}"
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
     non_masquerade_cidr = "${var.non-masquerade-cidr}"
@@ -408,7 +416,7 @@ data "template_file" "milpa-worker-userdata" {
   template = "${file("${var.milpa-worker-userdata}")}"
 
   vars {
-    k8stoken = "${data.external.k8stoken.result.token}"
+    k8stoken = "${local.k8stoken}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     service_cidr = "${var.service-cidr}"
     cluster_name = "${var.cluster-name}"
@@ -428,7 +436,7 @@ data "template_file" "worker-userdata" {
   template = "${file("${var.worker-userdata}")}"
 
   vars {
-    k8stoken = "${data.external.k8stoken.result.token}"
+    k8stoken = "${local.k8stoken}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     pod_cidr = "${var.pod-cidr}"
     non_masquerade_cidr = "${var.non-masquerade-cidr}"
