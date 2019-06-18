@@ -14,7 +14,8 @@ sysctl net.bridge.bridge-nf-call-iptables=1
 sysctl net.ipv4.ip_forward=1
 iptables -P FORWARD ACCEPT
 
-if [[ -z "${non_masquerade_cidr}" ]]; then
+non_masquerade_cidr="${non_masquerade_cidr}"
+if [[ -z "$non_masquerade_cidr" ]]; then
     non_masquerade_cidr="${pod_cidr}"
 fi
 
@@ -36,7 +37,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: aws
     network-plugin: kubenet
-    non-masquerade-cidr: ${non_masquerade_cidr}
+    non-masquerade-cidr: $non_masquerade_cidr
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
