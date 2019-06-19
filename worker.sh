@@ -7,11 +7,6 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni docker.io
 
-non_masquerade_cidr="${non_masquerade_cidr}"
-if [[ -z "$non_masquerade_cidr" ]]; then
-    non_masquerade_cidr="${pod_cidr}"
-fi
-
 name=""
 while [[ -z "$name" ]]; do
     sleep 1
@@ -31,7 +26,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: aws
     network-plugin: kubenet
-    non-masquerade-cidr: $non_masquerade_cidr
+    non-masquerade-cidr: 0.0.0.0/0
 EOF
 
 modprobe br_netfilter

@@ -14,11 +14,6 @@ sysctl net.bridge.bridge-nf-call-iptables=1
 sysctl net.ipv4.ip_forward=1
 iptables -P FORWARD ACCEPT
 
-non_masquerade_cidr="${non_masquerade_cidr}"
-if [[ -z "$non_masquerade_cidr" ]]; then
-    non_masquerade_cidr="${pod_cidr}"
-fi
-
 name=""
 while [[ -z "$name" ]]; do
     sleep 1
@@ -37,7 +32,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: aws
     network-plugin: kubenet
-    non-masquerade-cidr: $non_masquerade_cidr
+    non-masquerade-cidr: 0.0.0.0/0
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
@@ -81,3 +76,12 @@ volumeBindingMode: Immediate
 reclaimPolicy: Retain
 EOF
 kubectl apply -f /tmp/storageclass.yaml
+
+mkdir -p /tmp/ip-masq-agent-config
+cat <<EOF > /tmp/ip-masq-agent-config/config
+nonMasqueradeCIDRs:
+  - ${pod_cidr}
+  - ${subnet_cidr}
+EOF
+kubectl create -n kube-system configmap ip-masq-agent --from-file=/tmp/ip-masq-agent-config/config
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-incubator/ip-masq-agent/master/ip-masq-agent.yaml

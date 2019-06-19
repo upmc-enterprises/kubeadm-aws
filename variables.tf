@@ -91,8 +91,3 @@ variable "pod-cidr" {
 variable "service-cidr" {
   default = "10.96.0.0/12"
 }
-
-variable "non-masquerade-cidr" {
-  // If empty, pod-cidr will be used.
-  default = ""
-}
