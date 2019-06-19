@@ -133,21 +133,6 @@ resource "aws_security_group" "kubernetes" {
   tags = "${local.k8s_cluster_tags}"
 }
 
-resource "aws_security_group" "pod-cidr-to-milpa-nodes" {
-  name = "milpa-nodes-extra"
-  description = "Allow inbound traffic from k8s pods to milpa nodes"
-  vpc_id = "${aws_vpc.main.id}"
-
-  ingress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["${var.pod-cidr}"]
-  }
-
-  tags = "${local.k8s_cluster_tags}"
-}
-
 resource "aws_iam_role" "k8s-master" {
   name = "k8s-master-${var.cluster-name}"
   assume_role_policy = <<EOF
@@ -444,7 +429,7 @@ data "template_file" "milpa-worker-userdata" {
     itzo_url = "${var.itzo-url}"
     itzo_version = "${var.itzo-version}"
     milpa_installer_url = "${var.milpa-installer-url}"
-    extra_security_groups = "[\\\"${aws_security_group.pod-cidr-to-milpa-nodes.id}\\\"]"
+    pod_cidr = "${var.pod-cidr}"
   }
 }
 
