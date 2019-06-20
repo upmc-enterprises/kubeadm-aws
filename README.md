@@ -1,4 +1,4 @@
-# Simple Kubernetes Cluster with Milpa
+# Simple Nodeless Kubernetes Cluster with Milpa
 
 Note: this is based on [upmc-enterprises/kubeadm-aws](https://github.com/upmc-enterprises/kubeadm-aws).
 
