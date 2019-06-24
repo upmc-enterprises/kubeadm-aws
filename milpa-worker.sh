@@ -27,6 +27,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: aws
     max-pods: "1000"
+    node-labels: kubernetes.io/role=milpa-worker
 EOF
 
 modprobe br_netfilter

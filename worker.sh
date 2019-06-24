@@ -27,6 +27,7 @@ nodeRegistration:
     cloud-provider: aws
     network-plugin: kubenet
     non-masquerade-cidr: 0.0.0.0/0
+    node-labels: kubernetes.io/role=worker
 EOF
 
 modprobe br_netfilter
