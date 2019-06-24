@@ -91,3 +91,11 @@ variable "pod-cidr" {
 variable "service-cidr" {
   default = "10.96.0.0/12"
 }
+
+variable "workers" {
+  default = 0
+}
+
+variable "milpa-workers" {
+  default = 1
+}

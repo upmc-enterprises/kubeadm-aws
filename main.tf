@@ -477,6 +477,7 @@ resource "aws_instance" "k8s-master" {
 resource "aws_instance" "k8s-milpa-worker" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
+  count = "${var.milpa-workers}"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.milpa-worker-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
@@ -492,6 +493,7 @@ resource "aws_instance" "k8s-milpa-worker" {
 resource "aws_instance" "k8s-worker" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
+  count = "${var.workers}"
   subnet_id = "${aws_subnet.publicA.id}"
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
