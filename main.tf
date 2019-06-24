@@ -404,7 +404,7 @@ locals {
 data "template_file" "master-userdata" {
   template = "${file("${var.master-userdata}")}"
 
-  vars {
+  vars = {
     k8stoken = "${local.k8stoken}"
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
@@ -415,7 +415,7 @@ data "template_file" "master-userdata" {
 data "template_file" "milpa-worker-userdata" {
   template = "${file("${var.milpa-worker-userdata}")}"
 
-  vars {
+  vars = {
     k8stoken = "${local.k8stoken}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     service_cidr = "${var.service-cidr}"
@@ -436,7 +436,7 @@ data "template_file" "milpa-worker-userdata" {
 data "template_file" "worker-userdata" {
   template = "${file("${var.worker-userdata}")}"
 
-  vars {
+  vars = {
     k8stoken = "${local.k8stoken}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     pod_cidr = "${var.pod-cidr}"
