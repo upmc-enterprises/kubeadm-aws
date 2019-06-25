@@ -20,3 +20,8 @@ license-password = "FILL_IN"
 # Optional parameters. URL and version of the Milpa node agent.
 #itzo-url = ""
 #itzo-version = ""
+# Specify the number of regular kubelet worker nodes.
+#workers = 0
+# Specify the number of Milpa worker nodes. Right now only 0 or 1 are
+# supported.
+#milpa-workers = 1
