@@ -81,7 +81,7 @@ mkdir -p /tmp/ip-masq-agent-config
 cat <<EOF > /tmp/ip-masq-agent-config/config
 nonMasqueradeCIDRs:
   - ${pod_cidr}
-  - ${subnet_cidr}
+$(for subnet in ${subnet_cidrs}; do echo "  - $subnet"; done)
 EOF
 kubectl create -n kube-system configmap ip-masq-agent --from-file=/tmp/ip-masq-agent-config/config
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-incubator/ip-masq-agent/master/ip-masq-agent.yaml

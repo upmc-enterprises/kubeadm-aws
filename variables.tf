@@ -80,10 +80,6 @@ variable "vpc-cidr" {
   default = "10.0.0.0/16"
 }
 
-variable "subnet-cidr" {
-  default = "10.0.100.0/24"
-}
-
 variable "pod-cidr" {
   default = "172.20.0.0/16"
 }
@@ -98,4 +94,10 @@ variable "workers" {
 
 variable "milpa-workers" {
   default = 1
+}
+
+variable "number-of-subnets" {
+  // Number of subnets to create in the VPC. Workers and Milpa pods will be
+  // created in a random subnet.
+  default = 3
 }

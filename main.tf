@@ -34,6 +34,11 @@ locals {
   )}"
 }
 
+resource "random_shuffle" "az" {
+  input = ["${var.region}a", "${var.region}b", "${var.region}c", "${var.region}d", "${var.region}e", ]
+  result_count = "${var.number-of-subnets}"
+}
+
 resource "aws_vpc" "main" {
   cidr_block = "${var.vpc-cidr}"
   enable_dns_hostnames = true
@@ -71,17 +76,19 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-resource "aws_subnet" "publicA" {
+resource "aws_subnet" "subnets" {
+  count = "${var.number-of-subnets}"
   vpc_id = "${aws_vpc.main.id}"
-  cidr_block = "${var.subnet-cidr}"
-  availability_zone = "us-east-1a"
+  cidr_block = "${cidrsubnet("${var.vpc-cidr}", 4, "${count.index+1}")}"
+  availability_zone = "${element("${random_shuffle.az.result}", count.index)}"
   map_public_ip_on_launch = true
 
   tags = "${local.k8s_cluster_tags}"
 }
 
-resource "aws_route_table" "r" {
+resource "aws_route_table" "route-table" {
   vpc_id = "${aws_vpc.main.id}"
+
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_internet_gateway.gw.id}"
@@ -92,9 +99,10 @@ resource "aws_route_table" "r" {
   tags = "${local.k8s_cluster_tags}"
 }
 
-resource "aws_route_table_association" "publicA" {
-  subnet_id = "${aws_subnet.publicA.id}"
-  route_table_id = "${aws_route_table.r.id}"
+resource "aws_route_table_association" "route-table-to-subnets" {
+  count = "${var.number-of-subnets}"
+  subnet_id = "${aws_subnet.subnets.*.id[count.index]}"
+  route_table_id = "${aws_route_table.route-table.id}"
 }
 
 resource "aws_security_group" "kubernetes" {
@@ -408,7 +416,7 @@ data "template_file" "master-userdata" {
     k8stoken = "${local.k8stoken}"
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
-    subnet_cidr = "${var.subnet-cidr}"
+    subnet_cidrs = "${join(" ", "${aws_subnet.subnets.*.cidr_block}")}"
   }
 }
 
@@ -462,7 +470,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "k8s-master" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
-  subnet_id = "${aws_subnet.publicA.id}"
+  subnet_id = "${aws_subnet.subnets.*.id[0]}"
   user_data = "${data.template_file.master-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
@@ -478,7 +486,7 @@ resource "aws_instance" "k8s-milpa-worker" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
   count = "${var.milpa-workers}"
-  subnet_id = "${aws_subnet.publicA.id}"
+  subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
   user_data = "${data.template_file.milpa-worker-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
@@ -494,7 +502,7 @@ resource "aws_instance" "k8s-worker" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
   count = "${var.workers}"
-  subnet_id = "${aws_subnet.publicA.id}"
+  subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
   user_data = "${data.template_file.worker-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
