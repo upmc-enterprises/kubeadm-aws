@@ -34,8 +34,12 @@ locals {
   )}"
 }
 
-resource "random_shuffle" "az" {
-  input = ["${var.region}a", "${var.region}b", "${var.region}c", "${var.region}d", "${var.region}e", ]
+data "aws_availability_zones" "available-azs" {
+  state = "available"
+}
+
+resource "random_shuffle" "azs" {
+  input = ["${data.aws_availability_zones.available-azs.names}"]
   result_count = "${var.number-of-subnets}"
 }
 
@@ -80,7 +84,7 @@ resource "aws_subnet" "subnets" {
   count = "${var.number-of-subnets}"
   vpc_id = "${aws_vpc.main.id}"
   cidr_block = "${cidrsubnet("${var.vpc-cidr}", 4, "${count.index+1}")}"
-  availability_zone = "${element("${random_shuffle.az.result}", count.index)}"
+  availability_zone = "${element("${random_shuffle.azs.result}", count.index)}"
   map_public_ip_on_launch = true
 
   tags = "${local.k8s_cluster_tags}"
