@@ -89,10 +89,12 @@ variable "service-cidr" {
 }
 
 variable "workers" {
+  // Number of regular kubelet workers to create in the cluster.
   default = 0
 }
 
 variable "milpa-workers" {
+  // Number of Milpa workers to create in the cluster.
   default = 1
 }
 
