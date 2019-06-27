@@ -7,6 +7,9 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni docker.io
 
+# Docker sets the policy for the FORWARD chain to DROP, change it back.
+iptables -P FORWARD ACCEPT
+
 name=""
 while [[ -z "$name" ]]; do
     sleep 1
@@ -29,10 +32,5 @@ nodeRegistration:
     non-masquerade-cidr: 0.0.0.0/0
     node-labels: kubernetes.io/role=worker
 EOF
-
-modprobe br_netfilter
-sysctl net.bridge.bridge-nf-call-iptables=1
-sysctl net.ipv4.ip_forward=1
-iptables -P FORWARD ACCEPT
 
 for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done

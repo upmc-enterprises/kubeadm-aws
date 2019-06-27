@@ -30,10 +30,6 @@ nodeRegistration:
     node-labels: kubernetes.io/role=milpa-worker
 EOF
 
-modprobe br_netfilter
-sysctl net.bridge.bridge-nf-call-iptables=1
-sysctl net.ipv4.ip_forward=1
-
 curl -L ${milpa_installer_url} > milpa-installer-latest
 chmod 755 milpa-installer-latest
 ./milpa-installer-latest
