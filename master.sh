@@ -5,9 +5,7 @@ cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 apt-get update
-apt-get install -y kubelet kubeadm kubectl kubernetes-cni
-curl -sSL https://get.docker.com/ | sh
-systemctl start docker
+apt-get install -y kubelet kubeadm kubectl kubernetes-cni docker.io
 
 # Docker sets the policy for the FORWARD chain to DROP, change it back.
 iptables -P FORWARD ACCEPT
