@@ -36,8 +36,6 @@ nodeRegistration:
 ---
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
-dns:
-  type: kube-dns
 networking:
   podSubnet: ${pod_cidr}
   serviceSubnet: ${service_cidr}
@@ -64,8 +62,6 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 mkdir -p /home/ubuntu/.kube
 sudo cp -i $KUBECONFIG /home/ubuntu/.kube/config
 sudo chown ubuntu: /home/ubuntu/.kube/config
-
-kubectl patch -n kube-system deployment kube-dns --patch '{"spec": {"template": {"spec": {"tolerations": [{"key": "CriticalAddonsOnly", "operator": "Exists"}]}}}}'
 
 cat <<EOF > /tmp/storageclass.yaml
 kind: StorageClass
