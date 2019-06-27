@@ -63,6 +63,7 @@ mkdir -p /home/ubuntu/.kube
 sudo cp -i $KUBECONFIG /home/ubuntu/.kube/config
 sudo chown ubuntu: /home/ubuntu/.kube/config
 
+# Create a default storage class, backed by EBS.
 cat <<EOF > /tmp/storageclass.yaml
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -76,6 +77,7 @@ reclaimPolicy: Retain
 EOF
 kubectl apply -f /tmp/storageclass.yaml
 
+# Set up ip-masq-agent.
 mkdir -p /tmp/ip-masq-agent-config
 cat <<EOF > /tmp/ip-masq-agent-config/config
 nonMasqueradeCIDRs:
