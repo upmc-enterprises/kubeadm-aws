@@ -50,6 +50,11 @@ controllerManager:
     cloud-provider: aws
     configure-cloud-routes: "true"
     address: 0.0.0.0
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+iptables:
+  masqueradeAll: true
 EOF
 kubeadm init --config=/tmp/kubeadm-config.yaml
 
@@ -59,8 +64,6 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 mkdir -p /home/ubuntu/.kube
 sudo cp -i $KUBECONFIG /home/ubuntu/.kube/config
 sudo chown ubuntu: /home/ubuntu/.kube/config
-
-kubectl get cm -n kube-system kube-proxy -oyaml | sed -r '/^\s+resourceVersion:/d' | sed 's/masqueradeAll: false/masqueradeAll: true/' | kubectl replace -f -
 
 kubectl patch -n kube-system deployment kube-dns --patch '{"spec": {"template": {"spec": {"tolerations": [{"key": "CriticalAddonsOnly", "operator": "Exists"}]}}}}'
 
