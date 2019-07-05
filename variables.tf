@@ -103,3 +103,10 @@ variable "number-of-subnets" {
   // created in a random subnet.
   default = 3
 }
+
+variable "k8s-version" {
+  // You can specify a specific version, for example "1.13.5*", or "*" for
+  // using the latest version available. Don't forget the last asterisk, since
+  // packages are named 1.13.5-00, 1.14.0-00, etc.
+  default = "*"
+}

@@ -418,6 +418,7 @@ data "template_file" "master-userdata" {
 
   vars = {
     k8stoken = "${local.k8stoken}"
+    k8s_version = "${var.k8s-version}"
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
     subnet_cidrs = "${join(" ", "${aws_subnet.subnets.*.cidr_block}")}"
@@ -429,6 +430,7 @@ data "template_file" "milpa-worker-userdata" {
 
   vars = {
     k8stoken = "${local.k8stoken}"
+    k8s_version = "${var.k8s-version}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     service_cidr = "${var.service-cidr}"
     cluster_name = "${var.cluster-name}"
@@ -450,6 +452,7 @@ data "template_file" "worker-userdata" {
 
   vars = {
     k8stoken = "${local.k8stoken}"
+    k8s_version = "${var.k8s-version}"
     masterIP = "${aws_instance.k8s-master.private_ip}"
     pod_cidr = "${var.pod-cidr}"
   }
