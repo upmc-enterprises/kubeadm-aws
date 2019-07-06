@@ -13,7 +13,7 @@ $ cp env-example.tfvars ~/env.tfvars
 $ vi ~/env.tfvars
 ```
 
-Fill in all the required variables, then apply the configuration:
+If you do not have a Milpa license, get a [Free Community Edition license](https://www.elotl.co/trial). Then, fill in all the required variables in `env.tfvars`, then apply the configuration:
 
     $ terraform init # Only needed the first time.
     [...]
