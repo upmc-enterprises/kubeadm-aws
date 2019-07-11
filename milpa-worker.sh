@@ -65,6 +65,7 @@ EOF
 systemctl daemon-reload
 systemctl restart criproxy
 
+# Configure kubelet.
 name=""
 while [[ -z "$name" ]]; do
     sleep 1
