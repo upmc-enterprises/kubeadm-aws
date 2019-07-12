@@ -83,3 +83,61 @@ EOF
 kubectl create -n kube-system configmap ip-masq-agent --from-file=/tmp/ip-masq-agent-config/config
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-incubator/ip-masq-agent/master/ip-masq-agent.yaml
 kubectl patch -n kube-system daemonset ip-masq-agent --patch '{"spec":{"template":{"spec":{"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/master"}]}}}}'
+
+# Start a kube-proxy deployment for Milpa. This will route cluster IP traffic
+# from Milpa pods.
+cat <<EOF > /tmp/kube-proxy-milpa.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: kube-proxy
+  name: kube-proxy
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: kube-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: kube-proxy
+      annotations:
+        kubernetes.io/target-runtime: kiyot
+    spec:
+      nodeSelector:
+        kubernetes.io/role: milpa-worker
+      containers:
+      - command:
+        - /usr/local/bin/kube-proxy
+        - --config=/var/lib/kube-proxy/config.conf
+        - --hostname-override=$(NODE_NAME)
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: k8s.gcr.io/kube-proxy:v1.15.0
+        name: kube-proxy
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/lib/kube-proxy
+          name: kube-proxy
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      securityContext: {}
+      serviceAccount: kube-proxy
+      serviceAccountName: kube-proxy
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: kube-proxy
+        name: kube-proxy
+EOF
+kubectl apply -f /tmp/kube-proxy-milpa.yaml
