@@ -39,7 +39,7 @@ data "aws_availability_zones" "available-azs" {
 }
 
 resource "random_shuffle" "azs" {
-  input = ["${data.aws_availability_zones.available-azs.names}"]
+  input = "${data.aws_availability_zones.available-azs.names}"
   result_count = "${var.number-of-subnets}"
 }
 
