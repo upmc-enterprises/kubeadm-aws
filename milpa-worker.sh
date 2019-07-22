@@ -100,6 +100,7 @@ chmod 755 milpa-installer-latest
 pip install yq
 yq -y ".clusterName=\"${cluster_name}\" | .cloud.aws.accessKeyID=\"${aws_access_key_id}\" | .cloud.aws.secretAccessKey=\"${aws_secret_access_key}\" | .cloud.aws.vpcID=\"\" | .nodes.itzo.url=\"${itzo_url}\" | .nodes.itzo.version=\"${itzo_version}\" | .nodes.extraCIDRs=[\"${pod_cidr}\"] | .license.key=\"${license_key}\" | .license.id=\"${license_id}\" | .license.username=\"${license_username}\" | .license.password=\"${license_password}\"" /opt/milpa/etc/server.yml > /opt/milpa/etc/server.yml.new && mv /opt/milpa/etc/server.yml.new /opt/milpa/etc/server.yml
 sed -i 's#--milpa-endpoint 127.0.0.1:54555$#--milpa-endpoint 127.0.0.1:54555 --service-cluster-ip-range ${service_cidr} --kubeconfig /etc/kubernetes/kubelet.conf#' /etc/systemd/system/kiyot.service
+sed -i '/mount/d' /etc/systemd/system/kiyot.service
 sed -i 's#--config /opt/milpa/etc/server.yml$#--config /opt/milpa/etc/server.yml --delete-cluster-lock-file#' /etc/systemd/system/milpa.service
 
 # Ensure systemd will keep restarting kubelet.
@@ -107,9 +108,10 @@ mkdir -p /etc/systemd/system/kubelet.service.d/
 echo -e "[Service]\nStartLimitInterval=0\nStartLimitIntervalSec=0\nRestart=always\nRestartSec=5" > /etc/systemd/system/kubelet.service.d/override.conf
 
 # Override number of CPUs and memory cadvisor reports.
-mkdir -p /rootfs/proc; rm -f /rootfs/proc/{cpu,mem}info
+infodir=/run/kiyot/proc
+mkdir -p $infodir; rm -f $infodir/{cpu,mem}info
 for i in $(seq 0 1023); do
-    cat << EOF >> /rootfs/proc/cpuinfo
+    cat << EOF >> $infodir/cpuinfo
 processor	: $i
 vendor_id	: GenuineIntel
 cpu family	: 6
@@ -139,11 +141,11 @@ power management:
 EOF
 done
 
-mem=$((1024*4096))
-cat << EOF > /rootfs/proc/meminfo
-MemTotal:      $mem kB
-MemFree:       $mem kB
-MemAvailable:  $mem kB
+mem=$((4096*1024*1024))
+cat << EOF > $infodir/meminfo
+$(printf "MemTotal:%15d kB" $mem)
+$(printf "MemFree:%16d kB" $mem)
+$(printf "MemAvailable:%11d kB" $mem)
 Buffers:          130288 kB
 Cached:          1551876 kB
 SwapCached:            0 kB
@@ -186,6 +188,11 @@ DirectMap4k:       57344 kB
 DirectMap2M:     2039808 kB
 EOF
 
+for info in {cpu,mem}info; do
+    /bin/mount | /bin/grep "\\W/proc/$info\\W" || /bin/mount --bind $infodir/$info /proc/$info
+done
+
+# Join cluster.
 for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
 
 systemctl daemon-reload
