@@ -141,3 +141,37 @@ spec:
         name: kube-proxy
 EOF
 kubectl apply -f /tmp/kube-proxy-milpa.yaml
+
+cat <<EOF > /tmp/kiyot-device-plugin.yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kiyot-device-plugin
+  namespace: kube-system
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: kiyot-device-plugin
+    spec:
+      priorityClassName: "system-node-critical"
+      nodeSelector:
+        kubernetes.io/role: milpa-worker
+      containers:
+      - image: elotl/kiyot-device-plugin:latest
+        name: kiyot-device-plugin
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+          - name: device-plugin
+            mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+EOF
+kubectl apply -f /tmp/kiyot-device-plugin.yaml
