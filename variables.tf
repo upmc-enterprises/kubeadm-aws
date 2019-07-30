@@ -110,3 +110,8 @@ variable "k8s-version" {
   // packages are named 1.13.5-00, 1.14.0-00, etc.
   default = "*"
 }
+
+variable "worker-disk-size" {
+  // Size of the root device volume in GB on the workers.
+  default = 15
+}
