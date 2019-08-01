@@ -46,7 +46,7 @@ check_prg jq
 # Delete instances in VPC. Do this in a loop, since Milpa might be still
 # creating new instances.
 while true; do
-    instances=$(aws ec2 describe-instances | jq -r ".Reservations | .[] | .Instances | .[] | select(.State.Name!=\"shutting-down\") | select(.State.Name!=\"terminated\") | select(.VpcId==\"$VPC_ID\") | select(.Tags) | select(.Tags[] | contains({\"Key\":\"MilpaClusterName\",\"Value\":\"$CLUSTER_NAME\"})) | .InstanceId")
+    instances=$(aws ec2 describe-instances | jq -r ".Reservations | .[] | .Instances | .[] | select(.State.Name!=\"shutting-down\") | select(.State.Name!=\"terminated\") | select(.VpcId==\"$VPC_ID\") | .InstanceId")
     if [[ -n "$instances" ]]; then
         echo "Terminating instances:"
         echo "$instances"
