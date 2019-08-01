@@ -512,6 +512,23 @@ resource "aws_instance" "k8s-milpa-worker" {
   depends_on = ["aws_internet_gateway.gw"]
 
   tags = "${local.k8s_cluster_tags}"
+
+  provisioner "local-exec" {
+    when = "destroy"
+    command = "aws ec2 terminate-instances --instance-ids ${self.id}"
+    environment = {
+      "AWS_REGION" = "${var.region}"
+      "AWS_DEFAULT_REGION" = "${var.region}"
+    }
+  }
+  provisioner "local-exec" {
+    when = "destroy"
+    command = "aws ec2 describe-instances --filters 'Name=vpc-id,Values=${aws_vpc.main.id}' 'Name=tag:MilpaNametag,Values=${var.cluster-name}-${count.index}' | jq -r '.Reservations | .[] | .Instances | .[] | .InstanceId' | xargs -r aws ec2 terminate-instances --instance-ids"
+    environment = {
+      "AWS_REGION" = "${var.region}"
+      "AWS_DEFAULT_REGION" = "${var.region}"
+    }
+  }
 }
 
 resource "aws_instance" "k8s-worker" {
