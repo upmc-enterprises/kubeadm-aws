@@ -101,6 +101,10 @@ resource "aws_route_table" "route-table" {
   depends_on = ["aws_internet_gateway.gw"]
 
   tags = "${local.k8s_cluster_tags}"
+
+  lifecycle {
+    ignore_changes = ["route"]
+  }
 }
 
 resource "aws_route_table_association" "route-table-to-subnets" {
