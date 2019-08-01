@@ -427,6 +427,7 @@ data "template_file" "master-userdata" {
 
 data "template_file" "milpa-worker-userdata" {
   template = "${file("${var.milpa-worker-userdata}")}"
+  count = "${var.milpa-workers}"
 
   vars = {
     k8stoken = "${local.k8stoken}"
@@ -434,6 +435,7 @@ data "template_file" "milpa-worker-userdata" {
     masterIP = "${aws_instance.k8s-master.private_ip}"
     service_cidr = "${var.service-cidr}"
     cluster_name = "${var.cluster-name}"
+    node_nametag = "${var.cluster-name}-${count.index}"
     aws_access_key_id = "${var.aws-access-key-id}"
     aws_secret_access_key = "${var.aws-secret-access-key}"
     default_instance_type = "${var.default-instance-type}"
@@ -497,7 +499,7 @@ resource "aws_instance" "k8s-milpa-worker" {
   instance_type = "t2.medium"
   count = "${var.milpa-workers}"
   subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
-  user_data = "${data.template_file.milpa-worker-userdata.rendered}"
+  user_data = "${element("${data.template_file.milpa-worker-userdata.*.rendered}", count.index)}"
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
