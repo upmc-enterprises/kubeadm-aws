@@ -20,6 +20,12 @@ license-password = "FILL_IN"
 # Optional parameters. URL and version of the Milpa node agent.
 #itzo-url = ""
 #itzo-version = ""
+# Optional parameter to specify the default cloud instance type.
+#default-instance-type = "t3.nano"
+# Optional parameter to specify the default volume size for cloud instances.
+#default-volume-size = "10Gi"
+# Optional parameter to override the dictionary specifying boot image tags.
+#boot-image-tags = {"company": "elotl", "product": "milpa"}
 # Specify the number of regular kubelet worker nodes.
 #workers = 0
 # Specify the number of Milpa worker nodes. Right now only 0 or 1 are
