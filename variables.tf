@@ -115,10 +115,3 @@ variable "worker-disk-size" {
   // Size of the root device volume in GB on the workers.
   default = 15
 }
-
-variable "k8stoken" {
-  // token used to authenticate and join the k8s cluster
-  // Generate a token via:
-  // python -c 'import random; print "%0x.%0x" % (random.SystemRandom().getrandbits(3*8), random.SystemRandom().getrandbits(8*8))'
-  default = ""
-}
