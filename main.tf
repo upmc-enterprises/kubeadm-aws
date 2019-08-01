@@ -529,6 +529,13 @@ resource "aws_instance" "k8s-milpa-worker" {
       "AWS_DEFAULT_REGION" = "${var.region}"
     }
   }
+
+  lifecycle {
+    # This seems like a bug in Terraform or the AWS provider - even though
+    # userdata is the same, TF thinks it has changed, which forces a
+    # replacement of the instance. Let's ignore userdata changes for now.
+    ignore_changes = ["user_data"]
+  }
 }
 
 resource "aws_instance" "k8s-worker" {
