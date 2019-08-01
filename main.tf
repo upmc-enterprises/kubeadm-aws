@@ -496,6 +496,10 @@ resource "aws_instance" "k8s-master" {
   depends_on = ["aws_internet_gateway.gw"]
 
   tags = "${local.k8s_cluster_tags}"
+
+  lifecycle {
+    ignore_changes = ["source_dest_check"]
+  }
 }
 
 resource "aws_instance" "k8s-milpa-worker" {
@@ -538,7 +542,7 @@ resource "aws_instance" "k8s-milpa-worker" {
     # This seems like a bug in Terraform or the AWS provider - even though
     # userdata is the same, TF thinks it has changed, which forces a
     # replacement of the instance. Let's ignore userdata changes for now.
-    ignore_changes = ["user_data"]
+    ignore_changes = ["user_data", "source_dest_check"]
   }
 }
 
@@ -560,4 +564,8 @@ resource "aws_instance" "k8s-worker" {
   depends_on = ["aws_internet_gateway.gw"]
 
   tags = "${local.k8s_cluster_tags}"
+
+  lifecycle {
+    ignore_changes = ["source_dest_check"]
+  }
 }
