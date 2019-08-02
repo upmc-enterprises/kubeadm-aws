@@ -531,7 +531,7 @@ resource "aws_instance" "k8s-milpa-worker" {
   }
   provisioner "local-exec" {
     when = "destroy"
-    command = "aws ec2 describe-instances --filters 'Name=vpc-id,Values=${aws_vpc.main.id}' 'Name=tag:MilpaNametag,Values=${var.cluster-name}-${count.index}' | jq -r '.Reservations | .[] | .Instances | .[] | .InstanceId' | xargs -r aws ec2 terminate-instances --instance-ids"
+    command = "./cleanup-milpa-nodes.sh ${aws_vpc.main.id} ${var.cluster-name}-${count.index}"
     environment = {
       "AWS_REGION" = "${var.region}"
       "AWS_DEFAULT_REGION" = "${var.region}"
