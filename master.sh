@@ -175,3 +175,161 @@ spec:
             path: /var/lib/kubelet/device-plugins
 EOF
 kubectl apply -f /tmp/kiyot-device-plugin.yaml
+
+cat <<EOF > /tmp/kiyot-ds.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-config
+  namespace: kube-system
+data:
+  SERVICE_CIDR: "${service_cidr}"
+  POD_CIDR: "${pod_cidr}"
+  MAX_PODS: "1000"
+  MILPACONF_cloud_aws_region: "us-east-1"
+  MILPACONF_cloud_aws_accessKeyID: ""
+  MILPACONF_cloud_aws_secretAccessKey: ""
+  MILPACONF_etcd_internal_dataDir: "/shared/milpa/data"
+  MILPACONF_nodes_nametag: "${node_nametag}"
+  MILPACONF_nodes_defaultVolumeSize: "${default_volume_size}"
+  MILPACONF_nodes_defaultInstanceType: "${default_instance_type}"
+  MILPACONF_nodes_bootImageTags: '${boot_image_tags}'
+  MILPACONF_license_username: ""
+  MILPACONF_license_password: ""
+  MILPACONF_license_key: ""
+  MILPACONF_license_id: ""
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kiyot
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiyot-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiyot
+roleRef:
+  kind: ClusterRole
+  name: kiyot-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: kiyot
+  namespace: kube-system
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kiyot
+  namespace: kube-system
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: kiyot
+    spec:
+      priorityClassName: "system-node-critical"
+      nodeSelector:
+        kubernetes.io/role: milpa-worker
+      restartPolicy: Always
+      hostNetwork: true
+      serviceAccountName: kiyot
+      initContainers:
+      - name: milpa-init
+        image: elotl/milpa
+        command:
+        - bash
+        - -c
+        - "/milpa-init.sh /shared/milpa"
+        envFrom:
+        - configMapRef:
+            name: env-config
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+      containers:
+      - name: kiyot
+        image: elotl/milpa
+        command:
+        - /kiyot
+        - --stderrthreshold=1
+        - --logtostderr
+        - --cert-dir=/shared/milpa/certs
+        - --listen=/run/milpa/kiyot.sock
+        - --milpa-endpoint=127.0.0.1:54555
+        - --service-cluster-ip-range=\$(SERVICE_CIDR)
+        - --kubeconfig=
+        env:
+        - name: SERVICE_CIDR
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: SERVICE_CIDR
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+        - name: run-milpa
+          mountPath: /run/milpa
+        - name: kubelet-pods
+          mountPath: /var/lib/kubelet/pods
+        - name: xtables-lock
+          mountPath: /run/xtables.lock
+        - name: lib-modules
+          mountPath: /lib/modules
+          readOnly: true
+      - name: milpa
+        image: elotl/milpa
+        command:
+        - /milpa
+        - --stderrthreshold=1
+        - --logtostderr
+        - --cert-dir=/shared/milpa/certs
+        - --config=/shared/milpa/server.yml
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+      volumes:
+      - name: shared
+        emptyDir: {}
+      - name: run-milpa
+        hostPath:
+          path: /run/milpa
+      - name: kubelet-pods
+        hostPath:
+          path: /var/lib/kubelet/pods
+      - name: xtables-lock
+        hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+EOF
+kubectl apply -f /tmp/kiyot-ds.yaml

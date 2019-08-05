@@ -54,7 +54,7 @@ Description=CRI Proxy
 Wants=containerd.service
 
 [Service]
-ExecStart=/usr/local/bin/criproxy -v 3 -logtostderr -connect /run/containerd/containerd.sock,kiyot:/opt/milpa/run/kiyot.sock -listen /run/criproxy.sock
+ExecStart=/usr/local/bin/criproxy -v 3 -logtostderr -connect /run/containerd/containerd.sock,kiyot:/run/milpa/kiyot.sock -listen /run/criproxy.sock
 Restart=always
 StartLimitInterval=0
 RestartSec=10
@@ -90,22 +90,6 @@ nodeRegistration:
     max-pods: "1000"
     node-labels: kubernetes.io/role=milpa-worker
 EOF
-
-# Install milpa and kiyot.
-curl -L ${milpa_installer_url} > milpa-installer-latest
-chmod 755 milpa-installer-latest
-./milpa-installer-latest
-
-# Configure milpa and kiyot.
-pip install yq
-yq -y '.clusterName="${cluster_name}" | .cloud.aws.accessKeyID="${aws_access_key_id}" | .cloud.aws.secretAccessKey="${aws_secret_access_key}" | .cloud.aws.vpcID="" | .nodes.nametag="${node_nametag}" | .nodes.itzo.url="${itzo_url}" | .nodes.itzo.version="${itzo_version}" | .nodes.extraCIDRs=["${pod_cidr}"] | .nodes.defaultInstanceType="${default_instance_type}" | .nodes.defaultVolumeSize="${default_volume_size}" | .nodes.bootImageTags=${boot_image_tags} | .license.key="${license_key}" | .license.id="${license_id}" | .license.username="${license_username}" | .license.password="${license_password}"' /opt/milpa/etc/server.yml > /opt/milpa/etc/server.yml.new && mv /opt/milpa/etc/server.yml.new /opt/milpa/etc/server.yml
-sed -i 's#--milpa-endpoint 127.0.0.1:54555$#--milpa-endpoint 127.0.0.1:54555 --service-cluster-ip-range ${service_cidr} --kubeconfig /etc/kubernetes/kubelet.conf#' /etc/systemd/system/kiyot.service
-sed -i '/mount/d' /etc/systemd/system/kiyot.service
-sed -i 's#--config /opt/milpa/etc/server.yml$#--config /opt/milpa/etc/server.yml --delete-cluster-lock-file#' /etc/systemd/system/milpa.service
-
-# Ensure systemd will keep restarting kubelet.
-mkdir -p /etc/systemd/system/kubelet.service.d/
-echo -e "[Service]\nStartLimitInterval=0\nStartLimitIntervalSec=0\nRestart=always\nRestartSec=5" > /etc/systemd/system/kubelet.service.d/override.conf
 
 # Override number of CPUs and memory cadvisor reports.
 infodir=/run/kiyot/proc
@@ -194,8 +178,3 @@ done
 
 # Join cluster.
 for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
-
-systemctl daemon-reload
-systemctl restart milpa
-systemctl restart kiyot
-systemctl restart kubelet

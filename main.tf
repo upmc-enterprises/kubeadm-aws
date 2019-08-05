@@ -426,20 +426,7 @@ data "template_file" "master-userdata" {
     pod_cidr = "${var.pod-cidr}"
     service_cidr = "${var.service-cidr}"
     subnet_cidrs = "${join(" ", "${aws_subnet.subnets.*.cidr_block}")}"
-  }
-}
-
-data "template_file" "milpa-worker-userdata" {
-  template = "${file("${var.milpa-worker-userdata}")}"
-  count = "${var.milpa-workers}"
-
-  vars = {
-    k8stoken = "${local.k8stoken}"
-    k8s_version = "${var.k8s-version}"
-    masterIP = "${aws_instance.k8s-master.private_ip}"
-    service_cidr = "${var.service-cidr}"
-    cluster_name = "${var.cluster-name}"
-    node_nametag = "${var.cluster-name}-${count.index}"
+    node_nametag = "${var.cluster-name}"
     aws_access_key_id = "${var.aws-access-key-id}"
     aws_secret_access_key = "${var.aws-secret-access-key}"
     default_instance_type = "${var.default-instance-type}"
@@ -452,7 +439,16 @@ data "template_file" "milpa-worker-userdata" {
     itzo_url = "${var.itzo-url}"
     itzo_version = "${var.itzo-version}"
     milpa_installer_url = "${var.milpa-installer-url}"
-    pod_cidr = "${var.pod-cidr}"
+  }
+}
+
+data "template_file" "milpa-worker-userdata" {
+  template = "${file("${var.milpa-worker-userdata}")}"
+
+  vars = {
+    k8stoken = "${local.k8stoken}"
+    k8s_version = "${var.k8s-version}"
+    masterIP = "${aws_instance.k8s-master.private_ip}"
   }
 }
 
@@ -502,12 +498,13 @@ resource "aws_instance" "k8s-master" {
   }
 }
 
+# TODO: make node_nametag unique per milpa worker.
 resource "aws_instance" "k8s-milpa-worker" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.medium"
   count = "${var.milpa-workers}"
   subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
-  user_data = "${element("${data.template_file.milpa-worker-userdata.*.rendered}", count.index)}"
+  user_data = "${data.template_file.milpa-worker-userdata.rendered}"
   key_name = "${var.ssh-key-name}"
   associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
@@ -531,7 +528,7 @@ resource "aws_instance" "k8s-milpa-worker" {
   }
   provisioner "local-exec" {
     when = "destroy"
-    command = "./cleanup-milpa-nodes.sh ${aws_vpc.main.id} ${var.cluster-name}-${count.index}"
+    command = "./cleanup-milpa-nodes.sh ${aws_vpc.main.id} ${var.cluster-name}"
     environment = {
       "AWS_REGION" = "${var.region}"
       "AWS_DEFAULT_REGION" = "${var.region}"
@@ -542,7 +539,7 @@ resource "aws_instance" "k8s-milpa-worker" {
     # This seems like a bug in Terraform or the AWS provider - even though
     # userdata is the same, TF thinks it has changed, which forces a
     # replacement of the instance. Let's ignore userdata changes for now.
-    ignore_changes = ["user_data", "source_dest_check"]
+    ignore_changes = ["source_dest_check"]
   }
 }
 
