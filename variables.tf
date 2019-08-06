@@ -66,13 +66,21 @@ variable "boot-image-tags" {
   default = {"company" = "elotl", "product" = "milpa"}
 }
 
-variable "license-key" {}
+variable "license-key" {
+  default = ""
+}
 
-variable "license-id" {}
+variable "license-id" {
+  default = ""
+}
 
-variable "license-username" {}
+variable "license-username" {
+  default = ""
+}
 
-variable "license-password" {}
+variable "license-password" {
+  default = ""
+}
 
 variable "region" {
   default = "us-east-1"
