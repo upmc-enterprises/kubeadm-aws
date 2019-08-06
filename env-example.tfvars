@@ -15,8 +15,6 @@ license-key = "FILL_IN"
 license-id = "FILL_IN"
 license-username = "FILL_IN"
 license-password = "FILL_IN"
-# Optional parameter. URL to fetch the installer from.
-#milpa-installer-url = ""
 # Optional parameters. URL and version of the Milpa node agent.
 #itzo-url = ""
 #itzo-version = ""

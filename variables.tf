@@ -37,11 +37,6 @@ variable "aws-secret-access-key" {
   default = ""
 }
 
-variable "milpa-installer-url" {
-  // The URL to download the Milpa installer from.
-  default = "https://download.elotl.co/milpa-installer-latest"
-}
-
 variable "itzo-url" {
   // The URL to download the node agent from.
   default = "http://itzo-download.s3.amazonaws.com"
