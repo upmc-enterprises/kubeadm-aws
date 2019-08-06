@@ -314,6 +314,8 @@ spec:
           mountPath: /shared
         - name: run-milpa
           mountPath: /run/milpa
+        - name: log-pods
+          mountPath: /var/log/pods
         - name: kubelet-pods
           mountPath: /var/lib/kubelet/pods
         - name: xtables-lock
@@ -356,6 +358,9 @@ spec:
       - name: kubelet-pods
         hostPath:
           path: /var/lib/kubelet/pods
+      - name: log-pods
+        hostPath:
+          path: /var/log/pods
       - name: xtables-lock
         hostPath:
           path: /run/xtables.lock
