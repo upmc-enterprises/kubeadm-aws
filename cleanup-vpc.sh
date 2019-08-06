@@ -5,8 +5,8 @@
 
 function usage() {
     {
-        echo "Usage $0 <vpc-id> <milpa-cluster-name>"
-        echo "You can also set the environment variables VPC_ID and CLUSTER_NAME."
+        echo "Usage $0 <vpc-id>"
+        echo "You can also set the environment variable VPC_ID."
     } >&2
     exit 1
 }
@@ -24,14 +24,6 @@ if [[ "$1" != "" ]]; then
     VPC_ID="$1"
 fi
 if [[ -z "$VPC_ID" ]]; then
-    usage
-fi
-shift
-
-if [[ "$1" != "" ]]; then
-    CLUSTER_NAME="$1"
-fi
-if [[ -z "$CLUSTER_NAME" ]]; then
     usage
 fi
 shift

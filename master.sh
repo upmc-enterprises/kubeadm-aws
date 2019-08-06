@@ -175,3 +175,193 @@ spec:
             path: /var/lib/kubelet/device-plugins
 EOF
 kubectl apply -f /tmp/kiyot-device-plugin.yaml
+
+cat <<EOF > /tmp/kiyot-ds.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: milpa-config
+  namespace: kube-system
+data:
+  SERVICE_CIDR: "${service_cidr}"
+  server.yml: |
+    apiVersion: v1
+    cloud:
+      aws:
+        region: "${aws_region}"
+        accessKeyID: "${aws_access_key_id}"
+        secretAccessKey: "${aws_secret_access_key}"
+        imageOwnerID: 689494258501
+    etcd:
+      client:
+        endpoints: []
+        certFile: ""
+        keyFile: ""
+        caFile: ""
+      internal:
+        dataDir: /shared/milpa/data
+    nodes:
+      firewallMode: OpenToVPC
+      defaultInstanceType: "${default_instance_type}"
+      defaultVolumeSize: "${default_volume_size}"
+      bootImageTags: ${boot_image_tags}
+      nametag: "${node_nametag}"
+      extraCIDRs:
+      - "${pod_cidr}"
+      itzo:
+        url: "${itzo_url}"
+        version: "${itzo_version}"
+    license:
+      key: "${license_key}"
+      id: "${license_id}"
+      username: "${license_username}"
+      password: "${license_password}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kiyot
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiyot-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiyot
+roleRef:
+  kind: ClusterRole
+  name: kiyot-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: kiyot
+  namespace: kube-system
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kiyot
+  namespace: kube-system
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: kiyot
+    spec:
+      priorityClassName: "system-node-critical"
+      nodeSelector:
+        kubernetes.io/role: milpa-worker
+      restartPolicy: Always
+      hostNetwork: true
+      serviceAccountName: kiyot
+      initContainers:
+      - name: milpa-init
+        image: elotl/milpa
+        command:
+        - bash
+        - -c
+        - "/milpa-init.sh /shared/milpa"
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+        - name: server-yml
+          mountPath: /etc/milpa
+      containers:
+      - name: kiyot
+        image: elotl/milpa
+        command:
+        - /kiyot
+        - --stderrthreshold=1
+        - --logtostderr
+        - --cert-dir=/shared/milpa/certs
+        - --listen=/run/milpa/kiyot.sock
+        - --milpa-endpoint=127.0.0.1:54555
+        - --service-cluster-ip-range=\$(SERVICE_CIDR)
+        - --kubeconfig=
+        env:
+        - name: SERVICE_CIDR
+          valueFrom:
+            configMapKeyRef:
+              name: milpa-config
+              key: SERVICE_CIDR
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+        - name: run-milpa
+          mountPath: /run/milpa
+        - name: kubelet-pods
+          mountPath: /var/lib/kubelet/pods
+        - name: xtables-lock
+          mountPath: /run/xtables.lock
+        - name: lib-modules
+          mountPath: /lib/modules
+          readOnly: true
+      - name: milpa
+        image: elotl/milpa
+        command:
+        - /milpa
+        - --stderrthreshold=1
+        - --logtostderr
+        - --cert-dir=/shared/milpa/certs
+        - --config=/etc/milpa/server.yml
+        volumeMounts:
+        - name: shared
+          mountPath: /shared
+        - name: server-yml
+          mountPath: /etc/milpa
+        - name: etc-machineid
+          mountPath: /etc/machine-id
+          readOnly: true
+      volumes:
+      - name: shared
+        emptyDir: {}
+      - name: server-yml
+        configMap:
+          name: milpa-config
+          items:
+          - key: server.yml
+            path: server.yml
+            mode: 0600
+      - name: etc-machineid
+        hostPath:
+          path: /etc/machine-id
+      - name: run-milpa
+        hostPath:
+          path: /run/milpa
+      - name: kubelet-pods
+        hostPath:
+          path: /var/lib/kubelet/pods
+      - name: xtables-lock
+        hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+EOF
+kubectl apply -f /tmp/kiyot-ds.yaml
