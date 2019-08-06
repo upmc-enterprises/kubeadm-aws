@@ -334,6 +334,9 @@ spec:
           mountPath: /shared
         - name: server-yml
           mountPath: /etc/milpa
+        - name: etc-machineid
+          mountPath: /etc/machine-id
+          readOnly: true
       volumes:
       - name: shared
         emptyDir: {}
@@ -344,6 +347,9 @@ spec:
           - key: server.yml
             path: server.yml
             mode: 0600
+      - name: etc-machineid
+        hostPath:
+          path: /etc/machine-id
       - name: run-milpa
         hostPath:
           path: /run/milpa
