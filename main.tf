@@ -429,6 +429,7 @@ data "template_file" "master-userdata" {
     node_nametag = "${var.cluster-name}"
     aws_access_key_id = "${var.aws-access-key-id}"
     aws_secret_access_key = "${var.aws-secret-access-key}"
+    aws_region = "${var.region}"
     default_instance_type = "${var.default-instance-type}"
     default_volume_size = "${var.default-volume-size}"
     boot_image_tags = "${jsonencode("${var.boot-image-tags}")}"

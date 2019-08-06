@@ -181,24 +181,42 @@ cat <<EOF > /tmp/kiyot-ds.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: env-config
+  name: milpa-config
   namespace: kube-system
 data:
   SERVICE_CIDR: "${service_cidr}"
-  POD_CIDR: "${pod_cidr}"
-  MAX_PODS: "1000"
-  MILPACONF_cloud_aws_region: "us-east-1"
-  MILPACONF_cloud_aws_accessKeyID: ""
-  MILPACONF_cloud_aws_secretAccessKey: ""
-  MILPACONF_etcd_internal_dataDir: "/shared/milpa/data"
-  MILPACONF_nodes_nametag: "${node_nametag}"
-  MILPACONF_nodes_defaultVolumeSize: "${default_volume_size}"
-  MILPACONF_nodes_defaultInstanceType: "${default_instance_type}"
-  MILPACONF_nodes_bootImageTags: '${boot_image_tags}'
-  MILPACONF_license_username: ""
-  MILPACONF_license_password: ""
-  MILPACONF_license_key: ""
-  MILPACONF_license_id: ""
+  server.yml: |
+    apiVersion: v1
+    cloud:
+      aws:
+        region: "${aws_region}"
+        accessKeyID: "${aws_access_key_id}"
+        secretAccessKey: "${aws_secret_access_key}"
+        imageOwnerID: 689494258501
+    etcd:
+      client:
+        endpoints: []
+        certFile: ""
+        keyFile: ""
+        caFile: ""
+      internal:
+        dataDir: /shared/milpa/data
+    nodes:
+      firewallMode: OpenToVPC
+      defaultInstanceType: "${default_instance_type}"
+      defaultVolumeSize: "${default_volume_size}"
+      bootImageTags: ${boot_image_tags}
+      nametag: "${node_nametag}"
+      extraCIDRs:
+      - "${pod_cidr}"
+      itzo:
+        url: "${itzo_url}"
+        version: "${itzo_version}"
+    license:
+      key: "${license_key}"
+      id: "${license_id}"
+      username: "${license_username}"
+      password: "${license_password}"
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -266,12 +284,11 @@ spec:
         - bash
         - -c
         - "/milpa-init.sh /shared/milpa"
-        envFrom:
-        - configMapRef:
-            name: env-config
         volumeMounts:
         - name: shared
           mountPath: /shared
+        - name: server-yml
+          mountPath: /etc/milpa
       containers:
       - name: kiyot
         image: elotl/milpa
@@ -288,7 +305,7 @@ spec:
         - name: SERVICE_CIDR
           valueFrom:
             configMapKeyRef:
-              name: env-config
+              name: milpa-config
               key: SERVICE_CIDR
         securityContext:
           privileged: true
@@ -311,13 +328,22 @@ spec:
         - --stderrthreshold=1
         - --logtostderr
         - --cert-dir=/shared/milpa/certs
-        - --config=/shared/milpa/server.yml
+        - --config=/etc/milpa/server.yml
         volumeMounts:
         - name: shared
           mountPath: /shared
+        - name: server-yml
+          mountPath: /etc/milpa
       volumes:
       - name: shared
         emptyDir: {}
+      - name: server-yml
+        configMap:
+          name: milpa-config
+          items:
+          - key: server.yml
+            path: server.yml
+            mode: 0600
       - name: run-milpa
         hostPath:
           path: /run/milpa

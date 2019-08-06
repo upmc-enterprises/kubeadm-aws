@@ -11,10 +11,10 @@ cluster-name = "mycluster"
 ssh-key-name = "my-ssh-key"
 # License information for Milpa. Request a free license at
 # https://www.elotl.co/trial.
-license-key = "FILL_IN"
-license-id = "FILL_IN"
-license-username = "FILL_IN"
-license-password = "FILL_IN"
+license-key = ""
+license-id = ""
+license-username = ""
+license-password = ""
 # Optional parameters. URL and version of the Milpa node agent.
 #itzo-url = ""
 #itzo-version = ""
