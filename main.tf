@@ -440,6 +440,7 @@ data "template_file" "master-userdata" {
     license_password = "${var.license-password}"
     itzo_url = "${var.itzo-url}"
     itzo_version = "${var.itzo-version}"
+    milpa_image = "${var.milpa-image}"
   }
 }
 

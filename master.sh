@@ -273,7 +273,7 @@ spec:
       serviceAccountName: kiyot
       initContainers:
       - name: milpa-init
-        image: elotl/milpa
+        image: ${milpa_image}
         command:
         - bash
         - -c
@@ -285,7 +285,7 @@ spec:
           mountPath: /etc/milpa
       containers:
       - name: kiyot
-        image: elotl/milpa
+        image: ${milpa_image}
         command:
         - /kiyot
         - --stderrthreshold=1
@@ -318,7 +318,7 @@ spec:
           mountPath: /lib/modules
           readOnly: true
       - name: milpa
-        image: elotl/milpa
+        image: ${milpa_image}
         command:
         - /milpa
         - --stderrthreshold=1

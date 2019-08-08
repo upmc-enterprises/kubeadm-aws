@@ -145,3 +145,7 @@ variable "blacklisted-azs" {
   type    = list(string)
   default = []
 }
+
+variable "milpa-image" {
+  default = "elotl/milpa"
+}
