@@ -295,6 +295,7 @@ spec:
         - --milpa-endpoint=127.0.0.1:54555
         - --service-cluster-ip-range=\$(SERVICE_CIDR)
         - --kubeconfig=
+        - --host-rootfs=/host-rootfs
         env:
         - name: SERVICE_CIDR
           valueFrom:
@@ -308,10 +309,8 @@ spec:
           mountPath: /shared
         - name: run-milpa
           mountPath: /run/milpa
-        - name: log-pods
-          mountPath: /var/log/pods
-        - name: kubelet-pods
-          mountPath: /var/lib/kubelet/pods
+        - name: host-rootfs
+          mountPath: /host-rootfs
         - name: xtables-lock
           mountPath: /run/xtables.lock
         - name: lib-modules
@@ -349,12 +348,9 @@ spec:
       - name: run-milpa
         hostPath:
           path: /run/milpa
-      - name: kubelet-pods
+      - name: host-rootfs
         hostPath:
-          path: /var/lib/kubelet/pods
-      - name: log-pods
-        hostPath:
-          path: /var/log/pods
+          path: /
       - name: xtables-lock
         hostPath:
           path: /run/xtables.lock
