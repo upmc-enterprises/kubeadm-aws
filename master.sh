@@ -194,15 +194,9 @@ data:
         secretAccessKey: "${aws_secret_access_key}"
         imageOwnerID: 689494258501
     etcd:
-      client:
-        endpoints: []
-        certFile: ""
-        keyFile: ""
-        caFile: ""
       internal:
         dataDir: /shared/milpa/data
     nodes:
-      firewallMode: OpenToVPC
       defaultInstanceType: "${default_instance_type}"
       defaultVolumeSize: "${default_volume_size}"
       bootImageTags: ${boot_image_tags}

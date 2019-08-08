@@ -137,3 +137,11 @@ variable "worker-disk-size" {
   // Size of the root device volume in GB on the workers.
   default = 15
 }
+
+variable "blacklisted-azs" {
+  // Blacklist certain AZs to prevent capacity problems.
+  // For example, in our account us-east-1e doesn't support nitro instances
+  // which creates problems for us.
+  type    = list(string)
+  default = []
+}
