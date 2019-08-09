@@ -238,6 +238,32 @@ rules:
   - pods
   verbs:
   - get
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+    - get
+    - list
+    - watch
+    - create
+    - delete
+    - deletecollection
+    - patch
+    - update
+- apiGroups:
+  - kiyot.elotl.co
+  resources:
+  - kiyotnodes
+  verbs:
+    - get
+    - list
+    - watch
+    - create
+    - delete
+    - deletecollection
+    - patch
+    - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -325,6 +351,12 @@ spec:
         - --logtostderr
         - --cert-dir=/shared/milpa/certs
         - --config=/etc/milpa/server.yml
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
         volumeMounts:
         - name: shared
           mountPath: /shared
