@@ -9,7 +9,7 @@ This is a Terraform configuration for provisioning a simple (one master, one wor
 Create a file at `~/env.tfvars`:
 
 ```
-$ cp env-example.tfvars ~/env.tfvars
+$ cp env.tfvars.example ~/env.tfvars
 $ vi ~/env.tfvars
 ```
 
