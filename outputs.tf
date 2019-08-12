@@ -24,13 +24,13 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 */
 
 output "master_ip" {
-  value = "${aws_instance.k8s-master.public_ip}"
+  value = aws_instance.k8s-master.public_ip
 }
 
 output "milpa_worker_ips" {
-  value = "${aws_instance.k8s-milpa-worker.*.public_ip}"
+  value = aws_instance.k8s-milpa-worker.*.public_ip
 }
 
 output "worker_ips" {
-  value = "${aws_instance.k8s-worker.*.public_ip}"
+  value = aws_instance.k8s-worker.*.public_ip
 }

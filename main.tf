@@ -24,134 +24,134 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 */
 
 provider "aws" {
-  region     = "${var.region}"
+  region = var.region
 }
 
 locals {
-  k8s_cluster_tags = "${map(
-    "Name", "kubeadm-milpa-${var.cluster-name}",
-    "kubernetes.io/cluster/${var.cluster-name}", "owned"
-  )}"
+  k8s_cluster_tags = {
+    "Name"                                      = "kubeadm-milpa-${var.cluster-name}"
+    "kubernetes.io/cluster/${var.cluster-name}" = "owned"
+  }
 }
 
 data "aws_availability_zones" "available-azs" {
-  state = "available"
+  state                = "available"
   blacklisted_zone_ids = var.blacklisted-azs
 }
 
 resource "random_shuffle" "azs" {
-  input = "${data.aws_availability_zones.available-azs.names}"
-  result_count = "${var.number-of-subnets}"
+  input        = data.aws_availability_zones.available-azs.names
+  result_count = var.number-of-subnets
 }
 
 resource "aws_vpc" "main" {
-  cidr_block = "${var.vpc-cidr}"
+  cidr_block           = var.vpc-cidr
   enable_dns_hostnames = true
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   provisioner "local-exec" {
     # Remove any leftover instance, security group etc Milpa created. They
     # would prevent terraform from destroying the VPC.
-    when    = "destroy"
-    command = "./cleanup-vpc.sh ${self.id}"
+    when        = destroy
+    command     = "./cleanup-vpc.sh ${self.id}"
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      "AWS_REGION" = "${var.region}"
-      "AWS_DEFAULT_REGION" = "${var.region}"
+      "AWS_REGION"         = var.region
+      "AWS_DEFAULT_REGION" = var.region
     }
   }
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.main.id}"
+  vpc_id = aws_vpc.main.id
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   provisioner "local-exec" {
     # Remove any leftover instance, security group etc Milpa created. They
     # would prevent terraform from destroying the VPC.
-    when    = "destroy"
-    command = "./cleanup-vpc.sh ${self.vpc_id}"
+    when        = destroy
+    command     = "./cleanup-vpc.sh ${self.vpc_id}"
     interpreter = ["/bin/bash", "-c"]
     environment = {
-      "AWS_REGION" = "${var.region}"
-      "AWS_DEFAULT_REGION" = "${var.region}"
+      "AWS_REGION"         = var.region
+      "AWS_DEFAULT_REGION" = var.region
     }
   }
 }
 
 resource "aws_subnet" "subnets" {
-  count = "${var.number-of-subnets}"
-  vpc_id = "${aws_vpc.main.id}"
-  cidr_block = "${cidrsubnet("${var.vpc-cidr}", 4, "${count.index+1}")}"
-  availability_zone = "${element("${random_shuffle.azs.result}", count.index)}"
+  count                   = var.number-of-subnets
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = cidrsubnet(var.vpc-cidr, 4, count.index + 1)
+  availability_zone       = element(random_shuffle.azs.result, count.index)
   map_public_ip_on_launch = true
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 }
 
 resource "aws_route_table" "route-table" {
-  vpc_id = "${aws_vpc.main.id}"
+  vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.gw.id}"
+    gateway_id = aws_internet_gateway.gw.id
   }
 
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = [aws_internet_gateway.gw]
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   lifecycle {
-    ignore_changes = ["route"]
+    ignore_changes = [route]
   }
 }
 
 resource "aws_route_table_association" "route-table-to-subnets" {
-  count = "${var.number-of-subnets}"
-  subnet_id = "${aws_subnet.subnets.*.id[count.index]}"
-  route_table_id = "${aws_route_table.route-table.id}"
+  count          = var.number-of-subnets
+  subnet_id      = aws_subnet.subnets[count.index].id
+  route_table_id = aws_route_table.route-table.id
 }
 
 resource "aws_security_group" "kubernetes" {
-  name = "kubernetes"
+  name        = "kubernetes"
   description = "Allow inbound ssh traffic"
-  vpc_id = "${aws_vpc.main.id}"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["${var.vpc-cidr}"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.vpc-cidr]
   }
 
   ingress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["${var.pod-cidr}"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.pod-cidr]
   }
 
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 }
 
 resource "aws_iam_role" "k8s-master" {
-  name = "k8s-master-${var.cluster-name}"
+  name               = "k8s-master-${var.cluster-name}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -166,11 +166,12 @@ resource "aws_iam_role" "k8s-master" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy" "k8s-master" {
   name = "k8s-master-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-master.id}"
+  role = aws_iam_role.k8s-master.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -240,15 +241,16 @@ resource "aws_iam_role_policy" "k8s-master" {
   ]
 }
 EOF
+
 }
 
-resource  "aws_iam_instance_profile" "k8s-master" {
+resource "aws_iam_instance_profile" "k8s-master" {
   name = "k8s-master-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-master.name}"
+  role = aws_iam_role.k8s-master.name
 }
 
 resource "aws_iam_role" "k8s-milpa-worker" {
-  name = "k8s-milpa-worker-${var.cluster-name}"
+  name               = "k8s-milpa-worker-${var.cluster-name}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -263,11 +265,12 @@ resource "aws_iam_role" "k8s-milpa-worker" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy" "k8s-milpa-worker" {
   name = "k8s-milpa-worker-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-milpa-worker.id}"
+  role = aws_iam_role.k8s-milpa-worker.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -349,15 +352,16 @@ resource "aws_iam_role_policy" "k8s-milpa-worker" {
   ]
 }
 EOF
+
 }
 
-resource  "aws_iam_instance_profile" "k8s-milpa-worker" {
+resource "aws_iam_instance_profile" "k8s-milpa-worker" {
   name = "k8s-milpa-worker-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-milpa-worker.name}"
+  role = aws_iam_role.k8s-milpa-worker.name
 }
 
 resource "aws_iam_role" "k8s-worker" {
-  name = "k8s-worker-${var.cluster-name}"
+  name               = "k8s-worker-${var.cluster-name}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -372,11 +376,12 @@ resource "aws_iam_role" "k8s-worker" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy" "k8s-worker" {
   name = "k8s-worker-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-worker.id}"
+  role = aws_iam_role.k8s-worker.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -399,11 +404,12 @@ resource "aws_iam_role_policy" "k8s-worker" {
   ]
 }
 EOF
+
 }
 
-resource  "aws_iam_instance_profile" "k8s-worker" {
+resource "aws_iam_instance_profile" "k8s-worker" {
   name = "k8s-worker-${var.cluster-name}"
-  role = "${aws_iam_role.k8s-worker.name}"
+  role = aws_iam_role.k8s-worker.name
 }
 
 resource "random_id" "k8stoken-prefix" {
@@ -415,53 +421,57 @@ resource "random_id" "k8stoken-suffix" {
 }
 
 locals {
-  k8stoken = "${format("%s.%s", random_id.k8stoken-prefix.hex, random_id.k8stoken-suffix.hex)}"
+  k8stoken = format(
+    "%s.%s",
+    random_id.k8stoken-prefix.hex,
+    random_id.k8stoken-suffix.hex,
+  )
 }
 
 data "template_file" "master-userdata" {
-  template = "${file("${var.master-userdata}")}"
+  template = file(var.master-userdata)
 
   vars = {
-    k8stoken = "${local.k8stoken}"
-    k8s_version = "${var.k8s-version}"
-    pod_cidr = "${var.pod-cidr}"
-    service_cidr = "${var.service-cidr}"
-    subnet_cidrs = "${join(" ", "${aws_subnet.subnets.*.cidr_block}")}"
-    node_nametag = "${var.cluster-name}"
-    aws_access_key_id = "${var.aws-access-key-id}"
-    aws_secret_access_key = "${var.aws-secret-access-key}"
-    aws_region = "${var.region}"
-    default_instance_type = "${var.default-instance-type}"
-    default_volume_size = "${var.default-volume-size}"
-    boot_image_tags = "${jsonencode("${var.boot-image-tags}")}"
-    license_key = "${var.license-key}"
-    license_id = "${var.license-id}"
-    license_username = "${var.license-username}"
-    license_password = "${var.license-password}"
-    itzo_url = "${var.itzo-url}"
-    itzo_version = "${var.itzo-version}"
-    milpa_image = "${var.milpa-image}"
+    k8stoken              = local.k8stoken
+    k8s_version           = var.k8s-version
+    pod_cidr              = var.pod-cidr
+    service_cidr          = var.service-cidr
+    subnet_cidrs          = join(" ", aws_subnet.subnets.*.cidr_block)
+    node_nametag          = var.cluster-name
+    aws_access_key_id     = var.aws-access-key-id
+    aws_secret_access_key = var.aws-secret-access-key
+    aws_region            = var.region
+    default_instance_type = var.default-instance-type
+    default_volume_size   = var.default-volume-size
+    boot_image_tags       = jsonencode(var.boot-image-tags)
+    license_key           = var.license-key
+    license_id            = var.license-id
+    license_username      = var.license-username
+    license_password      = var.license-password
+    itzo_url              = var.itzo-url
+    itzo_version          = var.itzo-version
+    milpa_image           = var.milpa-image
   }
 }
 
 data "template_file" "milpa-worker-userdata" {
-  template = "${file("${var.milpa-worker-userdata}")}"
+  template = file(var.milpa-worker-userdata)
 
   vars = {
-    k8stoken = "${local.k8stoken}"
-    k8s_version = "${var.k8s-version}"
-    masterIP = "${aws_instance.k8s-master.private_ip}"
+    k8stoken    = local.k8stoken
+    k8s_version = var.k8s-version
+    masterIP    = aws_instance.k8s-master.private_ip
   }
 }
 
 data "template_file" "worker-userdata" {
-  template = "${file("${var.worker-userdata}")}"
+  template = file(var.worker-userdata)
 
   vars = {
-    k8stoken = "${local.k8stoken}"
-    k8s_version = "${var.k8s-version}"
-    masterIP = "${aws_instance.k8s-master.private_ip}"
-    pod_cidr = "${var.pod-cidr}"
+    k8stoken    = local.k8stoken
+    k8s_version = var.k8s-version
+    masterIP    = aws_instance.k8s-master.private_ip
+    pod_cidr    = var.pod-cidr
   }
 }
 
@@ -482,58 +492,58 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "k8s-master" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.medium"
-  subnet_id = "${aws_subnet.subnets.*.id[0]}"
-  user_data = "${data.template_file.master-userdata.rendered}"
-  key_name = "${var.ssh-key-name}"
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.medium"
+  subnet_id                   = aws_subnet.subnets[0].id
+  user_data                   = data.template_file.master-userdata.rendered
+  key_name                    = var.ssh-key-name
   associate_public_ip_address = true
-  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-master.id}"
+  vpc_security_group_ids      = [aws_security_group.kubernetes.id]
+  iam_instance_profile        = aws_iam_instance_profile.k8s-master.id
 
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = [aws_internet_gateway.gw]
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   lifecycle {
-    ignore_changes = ["source_dest_check"]
+    ignore_changes = [source_dest_check]
   }
 }
 
 # TODO: make node_nametag unique per milpa worker.
 resource "aws_instance" "k8s-milpa-worker" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.medium"
-  count = "${var.milpa-workers}"
-  subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
-  user_data = "${data.template_file.milpa-worker-userdata.rendered}"
-  key_name = "${var.ssh-key-name}"
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.medium"
+  count                       = var.milpa-workers
+  subnet_id                   = element(aws_subnet.subnets.*.id, count.index)
+  user_data                   = data.template_file.milpa-worker-userdata.rendered
+  key_name                    = var.ssh-key-name
   associate_public_ip_address = true
-  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-milpa-worker.id}"
+  vpc_security_group_ids      = [aws_security_group.kubernetes.id]
+  iam_instance_profile        = aws_iam_instance_profile.k8s-milpa-worker.id
 
   root_block_device {
-    volume_size = "${var.worker-disk-size}"
+    volume_size = var.worker-disk-size
   }
 
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = [aws_internet_gateway.gw]
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   provisioner "local-exec" {
-    when = "destroy"
+    when    = destroy
     command = "aws ec2 terminate-instances --instance-ids ${self.id}"
     environment = {
-      "AWS_REGION" = "${var.region}"
-      "AWS_DEFAULT_REGION" = "${var.region}"
+      "AWS_REGION"         = var.region
+      "AWS_DEFAULT_REGION" = var.region
     }
   }
   provisioner "local-exec" {
-    when = "destroy"
+    when    = destroy
     command = "./cleanup-milpa-nodes.sh ${aws_vpc.main.id} ${var.cluster-name}"
     environment = {
-      "AWS_REGION" = "${var.region}"
-      "AWS_DEFAULT_REGION" = "${var.region}"
+      "AWS_REGION"         = var.region
+      "AWS_DEFAULT_REGION" = var.region
     }
   }
 
@@ -541,30 +551,30 @@ resource "aws_instance" "k8s-milpa-worker" {
     # This seems like a bug in Terraform or the AWS provider - even though
     # userdata is the same, TF thinks it has changed, which forces a
     # replacement of the instance. Let's ignore userdata changes for now.
-    ignore_changes = ["source_dest_check"]
+    ignore_changes = [source_dest_check]
   }
 }
 
 resource "aws_instance" "k8s-worker" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.medium"
-  count = "${var.workers}"
-  subnet_id = "${element("${aws_subnet.subnets.*.id}", count.index)}"
-  user_data = "${data.template_file.worker-userdata.rendered}"
-  key_name = "${var.ssh-key-name}"
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.medium"
+  count                       = var.workers
+  subnet_id                   = element(aws_subnet.subnets.*.id, count.index)
+  user_data                   = data.template_file.worker-userdata.rendered
+  key_name                    = var.ssh-key-name
   associate_public_ip_address = true
-  vpc_security_group_ids = ["${aws_security_group.kubernetes.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s-worker.id}"
+  vpc_security_group_ids      = [aws_security_group.kubernetes.id]
+  iam_instance_profile        = aws_iam_instance_profile.k8s-worker.id
 
   root_block_device {
-    volume_size = "${var.worker-disk-size}"
+    volume_size = var.worker-disk-size
   }
 
-  depends_on = ["aws_internet_gateway.gw"]
+  depends_on = [aws_internet_gateway.gw]
 
-  tags = "${local.k8s_cluster_tags}"
+  tags = local.k8s_cluster_tags
 
   lifecycle {
-    ignore_changes = ["source_dest_check"]
+    ignore_changes = [source_dest_check]
   }
 }

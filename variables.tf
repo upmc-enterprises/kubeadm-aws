@@ -23,9 +23,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 */
 
-variable "ssh-key-name" {}
+variable "ssh-key-name" {
+}
 
-variable "cluster-name" {}
+variable "cluster-name" {
+}
 
 variable "aws-access-key-id" {
   // If empty, IAM will be used.
@@ -63,7 +65,10 @@ variable "boot-image-tags" {
   // This is a JSON dictionary of key-value pairs, describing the image tags
   // Milpa will use when finding the AMI to launch cloud instances with. Only
   // change it when you know what you are doing.
-  default = {"company" = "elotl", "product" = "milpa"}
+  default = {
+    "company" = "elotl"
+    "product" = "milpa"
+  }
 }
 
 variable "license-key" {
