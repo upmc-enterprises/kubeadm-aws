@@ -143,7 +143,7 @@ variable "blacklisted-azs" {
   // For example, in our account us-east-1e doesn't support nitro instances
   // which creates problems for us.
   type    = list(string)
-  default = []
+  default = ["use1-az3"]
 }
 
 variable "milpa-image" {

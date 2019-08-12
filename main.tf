@@ -36,7 +36,7 @@ locals {
 
 data "aws_availability_zones" "available-azs" {
   state = "available"
-  blacklisted_names = var.blacklisted-azs
+  blacklisted_zone_ids = var.blacklisted-azs
 }
 
 resource "random_shuffle" "azs" {

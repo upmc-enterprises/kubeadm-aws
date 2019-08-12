@@ -1,8 +1,8 @@
-# Simple Nodeless Kubernetes Cluster with Milpa
+# Simple Nodeless Kubernetes Cluster with Milpa and Kiyot
 
 Note: this is based on [upmc-enterprises/kubeadm-aws](https://github.com/upmc-enterprises/kubeadm-aws).
 
-This is a Terraform configuration for provisioning a simple (one master, one worker) nodeless Kubernetes cluster that uses [Milpa](https://www.elotl.co/kiyotdocs) as its container runtime.
+This is a Terraform configuration for provisioning a simple (one master, one worker) nodeless Kubernetes cluster that uses [Milpa and Kiyot](https://www.elotl.co/kiyotdocs).  Milpa is a nodeless engine developed by Elotl and Kiyot is a CRI that plugs Milpa into Kubernetes.  The script will create a new VPC and subnet then create a nodeless kubernets cluster inside the VPC.
 
 ## Setup
 
@@ -13,16 +13,16 @@ $ cp env-example.tfvars ~/env.tfvars
 $ vi ~/env.tfvars
 ```
 
-If you do not have a Milpa license, get a [Free Community Edition license](https://www.elotl.co/trial). Then, fill in all the required variables in `env.tfvars`, then apply the configuration:
+Once you have filled in the necessary variables in `env.tfvars`, apply the configuration:
 
     $ terraform init # Only needed the first time.
     [...]
     $ terraform apply -var-file ~/env.tfvars
     [...]
-    Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
-    
+    Apply complete! Resources: 24 added, 0 changed, 0 destroyed.
+
     Outputs:
-    
+
     master_ip = 3.81.184.107
     worker_ip = 54.90.138.204
 
@@ -33,7 +33,7 @@ SSH into the master node and check the status of the cluster:
     ubuntu@ip-10-0-100-66:~$ kubectl cluster-info
     Kubernetes master is running at https://10.0.100.66:6443
     KubeDNS is running at https://10.0.100.66:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-    
+
     To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
     ubuntu@ip-10-0-100-66:~$ kubectl get nodes
     NAME              STATUS   ROLES    AGE   VERSION
@@ -43,7 +43,9 @@ SSH into the master node and check the status of the cluster:
 
 At this point, the cluster is ready to use.
 
-To schedule pods via Milpa, you have to add an annotation:
+## Run a Pod
+
+To schedule pods via Milpa, you have to add an annotation to select the correct node:
 
     ubuntu@ip-10-0-100-66:~$ kubectl run nginx --image=nginx --overrides='{"apiVersion": "apps/v1", "spec":{ "template":{ "metadata": { "annotations":{"kubernetes.io/target-runtime":"kiyot"} }, "spec": { "nodeSelector": {"kubernetes.io/role": "milpa-worker"} } } } }'
 
@@ -65,14 +67,14 @@ Then you can log out from the master, and use Terraform to tear down the infrast
 
     $ terraform destroy -var-file ~/env.tfvars
     [...]
-    Plan: 0 to add, 0 to change, 8 to destroy.
-    
+    Plan: 0 to add, 0 to change, 24 to destroy.
+
     Do you really want to destroy all resources?
       Terraform will destroy all your managed infrastructure, as shown above.
       There is no undo. Only 'yes' will be accepted to confirm.
-    
+
       Enter a value: yes
 
     [...]
 
-    Destroy complete! Resources: 8 destroyed.
+    Destroy complete! Resources: 24 destroyed.
