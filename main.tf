@@ -308,46 +308,9 @@ resource "aws_iam_role_policy" "k8s-milpa-worker" {
         "ec2:TerminateInstances",
         "ecr:BatchGetImage",
         "ecr:GetAuthorizationToken",
-        "ecr:GetDownloadUrlForLayer",
-        "elasticloadbalancing:DescribeLoadBalancerAttributes",
-        "elasticloadbalancing:DescribeLoadBalancers",
-        "elasticloadbalancing:DescribeTags",
-        "route53:ChangeResourceRecordSets",
-        "route53:CreateHostedZone",
-        "route53:GetChange",
-        "route53:ListHostedZonesByName",
-        "route53:ListResourceRecordSets"
+        "ecr:GetDownloadUrlForLayer"
       ],
       "Resource": "*"
-    },
-    {
-      "Sid": "dynamo",
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:CreateTable",
-        "dynamodb:PutItem",
-        "dynamodb:DescribeTable",
-        "dynamodb:GetItem"
-      ],
-      "Resource": "arn:aws:dynamodb:*:*:table/MilpaClusters"
-    },
-    {
-      "Sid": "elb",
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:DeleteLoadBalancer",
-        "elasticloadbalancing:RemoveTags",
-        "elasticloadbalancing:CreateLoadBalancer",
-        "elasticloadbalancing:ConfigureHealthCheck",
-        "elasticloadbalancing:AddTags",
-        "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
-        "elasticloadbalancing:DeleteLoadBalancerListeners",
-        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-        "elasticloadbalancing:ModifyLoadBalancerAttributes",
-        "elasticloadbalancing:CreateLoadBalancerListeners"
-      ],
-      "Resource": "arn:aws:elasticloadbalancing:*:*:loadbalancer/milpa-*"
     }
   ]
 }
