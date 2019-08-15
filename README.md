@@ -2,14 +2,14 @@
 
 Note: this is based on [upmc-enterprises/kubeadm-aws](https://github.com/upmc-enterprises/kubeadm-aws).
 
-This is a Terraform configuration for provisioning a simple (one master, one worker) nodeless Kubernetes cluster that uses [Milpa and Kiyot](https://www.elotl.co/kiyotdocs).  Milpa is a nodeless engine developed by Elotl and Kiyot is a CRI that plugs Milpa into Kubernetes.  The script will create a new VPC and subnet then create a nodeless kubernets cluster inside the VPC.
+This is a Terraform configuration for provisioning a simple nodeless Kubernetes cluster that uses [Milpa and Kiyot](https://www.elotl.co/kiyotdocs).  Milpa is a nodeless engine developed by Elotl and Kiyot is a CRI that plugs Milpa into Kubernetes.  The script will create a new VPC and subnet then create a nodeless kubernets cluster inside the VPC.
 
 ## Setup
 
 Create a file at `~/env.tfvars`:
 
 ```
-$ cp env-example.tfvars ~/env.tfvars
+$ cp env.tfvars.example ~/env.tfvars
 $ vi ~/env.tfvars
 ```
 
