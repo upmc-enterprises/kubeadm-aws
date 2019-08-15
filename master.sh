@@ -195,7 +195,7 @@ data:
         imageOwnerID: 689494258501
     etcd:
       internal:
-        dataDir: /shared/milpa/data
+        dataDir: /opt/milpa/data
     nodes:
       defaultInstanceType: "${default_instance_type}"
       defaultVolumeSize: "${default_volume_size}"
@@ -254,7 +254,7 @@ rules:
 - apiGroups:
   - kiyot.elotl.co
   resources:
-  - kiyotnodes
+  - cells
   verbs:
     - get
     - list
@@ -303,10 +303,10 @@ spec:
         command:
         - bash
         - -c
-        - "/milpa-init.sh /shared/milpa"
+        - "/milpa-init.sh /opt/milpa"
         volumeMounts:
-        - name: shared
-          mountPath: /shared
+        - name: optmilpa
+          mountPath: /opt/milpa
         - name: server-yml
           mountPath: /etc/milpa
       containers:
@@ -316,7 +316,7 @@ spec:
         - /kiyot
         - --stderrthreshold=1
         - --logtostderr
-        - --cert-dir=/shared/milpa/certs
+        - --cert-dir=/opt/milpa/certs
         - --listen=/run/milpa/kiyot.sock
         - --milpa-endpoint=127.0.0.1:54555
         - --service-cluster-ip-range=\$(SERVICE_CIDR)
@@ -331,8 +331,8 @@ spec:
         securityContext:
           privileged: true
         volumeMounts:
-        - name: shared
-          mountPath: /shared
+        - name: optmilpa
+          mountPath: /opt/milpa
         - name: run-milpa
           mountPath: /run/milpa
         - name: host-rootfs
@@ -348,7 +348,7 @@ spec:
         - /milpa
         - --stderrthreshold=1
         - --logtostderr
-        - --cert-dir=/shared/milpa/certs
+        - --cert-dir=/opt/milpa/certs
         - --config=/etc/milpa/server.yml
         env:
         - name: NODE_NAME
@@ -357,16 +357,18 @@ spec:
               apiVersion: v1
               fieldPath: spec.nodeName
         volumeMounts:
-        - name: shared
-          mountPath: /shared
+        - name: optmilpa
+          mountPath: /opt/milpa
         - name: server-yml
           mountPath: /etc/milpa
         - name: etc-machineid
           mountPath: /etc/machine-id
           readOnly: true
       volumes:
-      - name: shared
-        emptyDir: {}
+      - name: optmilpa
+        hostPath:
+          path: /opt/milpa
+          type: DirectoryOrCreate
       - name: server-yml
         configMap:
           name: milpa-config
@@ -391,4 +393,5 @@ spec:
         hostPath:
           path: /lib/modules
 EOF
+
 kubectl apply -f /tmp/kiyot-ds.yaml
