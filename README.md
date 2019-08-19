@@ -28,6 +28,10 @@ Once you have filled in the necessary variables in `env.tfvars`, apply the confi
 
 This will create a cluster with one master and one worker.
 
+Inline-style: 
+![alt text](https://github.com/elotl/kubeadm-aws/blob/master/nodelessk8s-hybrid.png "Nodeless Kubernetes Cluster")
+
+
 SSH into the master node and check the status of the cluster:
 
     ubuntu@ip-10-0-100-66:~$ kubectl cluster-info
