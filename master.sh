@@ -337,6 +337,7 @@ spec:
           mountPath: /run/milpa
         - name: host-rootfs
           mountPath: /host-rootfs
+          mountPropagation: HostToContainer
         - name: xtables-lock
           mountPath: /run/xtables.lock
         - name: lib-modules
@@ -393,5 +394,4 @@ spec:
         hostPath:
           path: /lib/modules
 EOF
-
 kubectl apply -f /tmp/kiyot-ds.yaml
