@@ -132,10 +132,10 @@ variable "number-of-subnets" {
 }
 
 variable "k8s-version" {
-  // You can specify a specific version, for example "1.13.5*", or "*" for
-  // using the latest version available. Don't forget the last asterisk, since
-  // packages are named 1.13.5-00, 1.14.0-00, etc.
-  default = "*"
+  // You can specify a specific version, for example "1.13.5", or "" for
+  // using the latest version available. Don't include a trailing asterisk
+  // that is appended by the install scripts.
+  default = ""
 }
 
 variable "worker-disk-size" {

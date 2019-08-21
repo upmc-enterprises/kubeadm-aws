@@ -5,7 +5,7 @@ cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
 apt-get update
-apt-get install -y kubelet=${k8s_version} kubeadm=${k8s_version} kubectl=${k8s_version} kubernetes-cni docker.io python-pip jq
+apt-get install -y kubelet="${k8s_version}*" kubeadm="${k8s_version}*" kubectl="${k8s_version}*" kubernetes-cni docker.io python-pip jq
 
 # Docker sets the policy for the FORWARD chain to DROP, change it back.
 iptables -P FORWARD ACCEPT
@@ -44,6 +44,7 @@ controllerManager:
     cloud-provider: aws
     configure-cloud-routes: "true"
     address: 0.0.0.0
+kubernetesVersion: "v${k8s_version}"
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
