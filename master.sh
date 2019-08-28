@@ -16,6 +16,12 @@ while [[ -z "$name" ]]; do
     name="$(hostname -f)"
 done
 
+if [ -z k8s_version ]; then
+    k8s_version=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+else
+    k8s_version=v${k8s_version}
+fi
+
 cat <<EOF > /tmp/kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: InitConfiguration
@@ -44,7 +50,7 @@ controllerManager:
     cloud-provider: aws
     configure-cloud-routes: "true"
     address: 0.0.0.0
-kubernetesVersion: "v${k8s_version}"
+kubernetesVersion: "${k8s_version}"
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
