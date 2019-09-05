@@ -92,89 +92,39 @@ nodeRegistration:
 EOF
 
 # Override number of CPUs and memory cadvisor reports.
-infodir=/run/kiyot/proc
+infodir=/opt/kiyot/proc
 mkdir -p $infodir; rm -f $infodir/{cpu,mem}info
 for i in $(seq 0 1023); do
     cat << EOF >> $infodir/cpuinfo
 processor	: $i
-vendor_id	: GenuineIntel
-cpu family	: 6
-model		: 63
-model name	: Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz
-stepping	: 2
-microcode	: 0x3c
-cpu MHz		: 2400.068
-cache size	: 30720 KB
 physical id	: 0
-siblings	: 1
 core id		: 0
-cpu cores	: 1
-apicid		: 0
-initial apicid	: 0
-fpu		: yes
-fpu_exception	: yes
-cpuid level	: 13
-wp		: yes
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology eagerfpu pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm invpcid_single retpoline kaiser fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt
-bugs		: cpu_meltdown spectre_v1 spectre_v2
-bogomips	: 4800.13
-clflush size	: 64
-cache_alignment	: 64
-address sizes	: 46 bits physical, 48 bits virtual
-power management:
+cpu MHz		: 2400.068
 EOF
 done
 
 mem=$((4096*1024*1024))
 cat << EOF > $infodir/meminfo
 $(printf "MemTotal:%15d kB" $mem)
-$(printf "MemFree:%16d kB" $mem)
-$(printf "MemAvailable:%11d kB" $mem)
-Buffers:          130288 kB
-Cached:          1551876 kB
-SwapCached:            0 kB
-Active:          1059664 kB
-Inactive:         785988 kB
-Active(anon):     164180 kB
-Inactive(anon):      244 kB
-Active(file):     895484 kB
-Inactive(file):   785744 kB
-Unevictable:           0 kB
-Mlocked:               0 kB
 SwapTotal:             0 kB
-SwapFree:              0 kB
-Dirty:              1236 kB
-Writeback:             0 kB
-AnonPages:        163432 kB
-Mapped:           174164 kB
-Shmem:               992 kB
-Slab:             101304 kB
-SReclaimable:      80056 kB
-SUnreclaim:        21248 kB
-KernelStack:        3536 kB
-PageTables:         4300 kB
-NFS_Unstable:          0 kB
-Bounce:                0 kB
-WritebackTmp:          0 kB
-CommitLimit:     1025472 kB
-Committed_AS:    1399960 kB
-VmallocTotal:   34359738367 kB
-VmallocUsed:           0 kB
-VmallocChunk:          0 kB
-HardwareCorrupted:     0 kB
-AnonHugePages:         0 kB
-HugePages_Total:       0
-HugePages_Free:        0
-HugePages_Rsvd:        0
-HugePages_Surp:        0
-Hugepagesize:       2048 kB
-DirectMap4k:       57344 kB
-DirectMap2M:     2039808 kB
 EOF
 
-for info in {cpu,mem}info; do
-    /bin/mount | /bin/grep "\\W/proc/$info\\W" || /bin/mount --bind $infodir/$info /proc/$info
-done
+cat <<EOF > /etc/systemd/system/kiyot-override-proc.service
+[Unit]
+Description=Override /proc info files
+Before=kubelet.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mount --bind $infodir/cpuinfo /proc/cpuinfo
+ExecStart=/bin/mount --bind $infodir/meminfo /proc/meminfo
+RemainAfterExit=true
+ExecStop=/bin/umount /proc/cpuinfo
+ExecStop=/bin/umount /proc/meminfo
+StandardOutput=journal
+EOF
+systemctl daemon-reload
+systemctl start kiyot-override-proc
 
 # Join cluster.
 for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
