@@ -127,4 +127,4 @@ systemctl daemon-reload
 systemctl start kiyot-override-proc
 
 # Join cluster.
-for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
+kubeadm join --config=/tmp/kubeadm-config.yaml

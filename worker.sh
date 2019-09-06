@@ -33,4 +33,4 @@ nodeRegistration:
     node-labels: kubernetes.io/role=worker
 EOF
 
-for i in {1..50}; do kubeadm join --config=/tmp/kubeadm-config.yaml && break || sleep 15; done
+kubeadm join --config=/tmp/kubeadm-config.yaml
