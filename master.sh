@@ -150,12 +150,15 @@ EOF
 kubectl apply -f /tmp/kube-proxy-milpa.yaml
 
 cat <<EOF > /tmp/kiyot-device-plugin.yaml
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: kiyot-device-plugin
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      name: kiyot-device-plugin
   updateStrategy:
     type: RollingUpdate
   template:
@@ -287,12 +290,15 @@ subjects:
   name: kiyot
   namespace: kube-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: kiyot
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      name: kiyot
   updateStrategy:
     type: RollingUpdate
   template:
