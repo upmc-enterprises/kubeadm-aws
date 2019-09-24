@@ -47,7 +47,7 @@ EOF
 systemctl restart containerd
 
 # Install criproxy.
-curl -L https://milpa-builds.s3.amazonaws.com/criproxy > /usr/local/bin/criproxy; chmod 755 /usr/local/bin/criproxy
+curl -fL https://github.com/elotl/criproxy/releases/download/v0.15.0/criproxy > /usr/local/bin/criproxy; chmod 755 /usr/local/bin/criproxy
 cat <<EOF > /etc/systemd/system/criproxy.service
 [Unit]
 Description=CRI Proxy
