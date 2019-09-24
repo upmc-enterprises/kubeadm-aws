@@ -88,7 +88,7 @@ nodeRegistration:
     network-plugin: kubenet
     non-masquerade-cidr: 0.0.0.0/0
     max-pods: "1000"
-    node-labels: kubernetes.io/role=milpa-worker
+    node-labels: elotl.co/milpa-worker=""
 EOF
 
 # Override number of CPUs and memory cadvisor reports.

@@ -30,7 +30,6 @@ nodeRegistration:
     cloud-provider: aws
     network-plugin: kubenet
     non-masquerade-cidr: 0.0.0.0/0
-    node-labels: kubernetes.io/role=worker
 EOF
 
 kubeadm join --config=/tmp/kubeadm-config.yaml
