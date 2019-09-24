@@ -51,7 +51,7 @@ At this point, the cluster is ready to use.
 
 To schedule pods via Milpa, you have to add an annotation to select the correct node:
 
-    ubuntu@ip-10-0-100-66:~$ kubectl run nginx --image=nginx --overrides='{"apiVersion": "apps/v1", "spec":{ "template":{ "metadata": { "annotations":{"kubernetes.io/target-runtime":"kiyot"} }, "spec": { "nodeSelector": {"kubernetes.io/role": "milpa-worker"} } } } }'
+    ubuntu@ip-10-0-100-66:~$ kubectl run nginx --image=nginx
 
 If you have both Milpa and non-Milpa workers in your cluster, you will also have to add a `nodeSelector` as above, otherwise pods will also be scheduled to run on non-Milpa workers.
 
